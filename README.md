@@ -5,7 +5,7 @@ This is a project to attempt the following challenge: https://covid.postera.ai/c
 ## Getting Started
 
 Clone the repo and get stuck in:
-* Data sets are included in datasets/'<source>'/
+* Data sets are included in e.g. datasets/chembl/
 * Code is in python3
 
 ### Prerequisites
