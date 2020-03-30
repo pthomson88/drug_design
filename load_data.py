@@ -34,7 +34,9 @@ print("")
 for key in df:
     print(key)
     print("*******************")
-    print(df[key])
+    #loop added to account for chunking
+    for chunk in df[key]:
+            print(chunk)
     print("*******************")
     print("")
 print("")

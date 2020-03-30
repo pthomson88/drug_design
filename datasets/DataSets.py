@@ -1,5 +1,5 @@
 import ssl
-
+#apparently this is needed for dealing with a certificate error
 ssl._create_default_https_context = ssl._create_unverified_context
 
 import urllib.request
@@ -15,8 +15,8 @@ class DataSet(object):
 
     def getdataframe(self, drive_url):
         self.csv_file = urllib.request.urlopen(drive_url)
-        dataframe = pd.read_csv(self.csv_file, error_bad_lines=False, iterator=True)
-        return dataframe.get_chunk(100)
+        dataframe = pd.read_csv(self.csv_file, error_bad_lines=False, chunksize = 100)
+        return dataframe
 
 
 #A dictionary pointing to google drive datasets - csv only
