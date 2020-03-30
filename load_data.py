@@ -1,5 +1,8 @@
-#We need to import the DataSet class and the dictionary of urls
-from datasets.DataSets import DataSet, url_dict
+#We need to import the DataSet class and load the dictionary of urls
+from datasets.DataSets import DataSet
+from save_load import load_obj
+
+url_dict = load_obj('url_dict')
 
 #list the available dataset keys
 print("")
