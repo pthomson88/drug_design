@@ -8,17 +8,22 @@ Get setup on Github and git:
 
 Next clone the repo and get stuck in:
 * In your terminal window you'll want to navigate to a sensible directory
-     * If you have a folder in your home drive called projects that you'd like to keep this in then in a unix environment (mac or linux) use the command: ``` cd projects```
-     * From here you'll want to clone the repository with the command: ```git clone git@github.com:pthomson88/drug_design.git```
+     * If you have a folder in your home drive called projects that you'd like to keep this in then in a unix environment (mac or linux) use the command: 
+``` cd projects```
+     * From here you'll want to clone the repository with the command:     
+```git clone git@github.com:pthomson88/drug_design.git```
 
 Next up you'll want to install miniconda:
 * This will let you set up a python environment with all the libraries you need (don't worry if you're not sure you have python - miniconda comes with a version of it)
      * This tutorial will help you get up and running: http://deeplearning.lipingyang.org/2018/12/24/install-miniconda-on-mac/
 * Next you'll want to load the environment I have from the `drug_design` directory - if this is in a folder called projects you'll want to do the following to get there from Downloads (where you'll be after installing miniconda):
-     * ```cd ..```
-     * ``` cd projects```
-     * ```cd drug_design```
-     * Now to load the environment: ``` conda env create -f drug_design.yml```
+```cd ..```
+``` cd projects```
+```cd drug_design```
+     * Now to load the environment:
+``` 
+conda env create -f drug_design.yml
+```
 * Finally you'll want to get going so activate your new conda environment:
 ```
 conda activate drug_design
