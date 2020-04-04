@@ -6,7 +6,7 @@ This is a project to attempt the following challenge: https://covid.postera.ai/c
 Get setup on Github and git:
 * This is a pretty good walkthrough - https://kbroman.org/github_tutorial/pages/first_time.html
 
-Clone the repo and get stuck in:
+Next clone the repo and get stuck in:
 * In your terminal window you'll want to navigate to a sensible directory
      * If you have folder in your home drive called projects you'd like to keep this in then in a unix environment (mac or linux) use the command: ``` cd projects```
      * From here you'll want to clone the repository with the command: ```git clone git@github.com:pthomson88/drug_design.git```
