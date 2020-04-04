@@ -2,6 +2,8 @@
 
 This is a project to attempt the following challenge: https://covid.postera.ai/covid
 
+There is a trello board for this project here: https://trello.com/b/wHk8KWTo/drugdesign-project
+
 ## Getting Started
 Get setup on Github and git:
 * This is a pretty good walkthrough - https://kbroman.org/github_tutorial/pages/first_time.html
