@@ -20,6 +20,7 @@ class DataSet(object):
 
 
 #A dictionary pointing to google drive datasets - csv only
+#This is not used directly but is useful to keep as a back-up
 url_dict = {
         "test_download"  : 'https://docs.google.com/spreadsheets/d/1o__Ar6O65DowaqCATTNjeK9kvr9NXJiX4Slo0tK-e4k/export?format=csv',
 		"chembl26_ph3_ph4" : 'https://docs.google.com/spreadsheets/d/1djFMETW8A111b7xv421L9jJWtIIN7Sn0ap95u8ml8eQ/export?format=csv'
