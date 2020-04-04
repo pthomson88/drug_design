@@ -8,7 +8,7 @@ Get setup on Github and git:
 
 Next clone the repo and get stuck in:
 * In your terminal window you'll want to navigate to a sensible directory
-     * If you have folder in your home drive called projects you'd like to keep this in then in a unix environment (mac or linux) use the command: ``` cd projects```
+     * If you have a folder in your home drive called projects that you'd like to keep this in then in a unix environment (mac or linux) use the command: ``` cd projects```
      * From here you'll want to clone the repository with the command: ```git clone git@github.com:pthomson88/drug_design.git```
 
 Next up you'll want to install miniconda:
