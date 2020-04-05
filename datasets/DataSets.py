@@ -6,8 +6,6 @@ import urllib.request
 import pandas as pd
 import dask.dataframe as dd
 
-#test comment
-
 #Class definition of a dataset
 class DataSet(object):
     """A class for dataset objects ."""
