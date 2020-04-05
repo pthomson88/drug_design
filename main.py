@@ -27,6 +27,7 @@ if next_action == "1":
     print("")
 
     df = dataframes[ds_key]
+    print(df.headers)
 
     columns = input("Which column contains the smiles you'd like to compare to :> ")
 

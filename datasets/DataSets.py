@@ -10,13 +10,25 @@ import dask.dataframe as dd
 class DataSet(object):
     """A class for dataset objects ."""
 
+    #initialises the object from a drive url and returns the resulting dataframe
     def __init__(self, drive_url):
-        self.drive_url = drive_url
 
-    def getdataframe(self, drive_url):
+        self.drive_url = drive_url
         self.csv_file = urllib.request.urlopen(drive_url)
-        dataframe = pd.read_csv(self.csv_file, error_bad_lines=False, chunksize = 100)
-        return dataframe
+
+        #the dataframe is read in chunks of 100 rows at a time and the headers are read
+        self.chunks = pd.read_csv(self.csv_file, error_bad_lines=False, chunksize = 100)
+
+        dfList = []
+        for df in self.chunks:
+            dfList.append(df)
+
+        self.dataframe = pd.concat(dfList,sort=False)
+
+        self.headers = [c for c in self.dataframe]
+
+    def how_many_chunks(self):
+        return len(self.chunks)
 
 
 #A dictionary pointing to google drive datasets - csv only
