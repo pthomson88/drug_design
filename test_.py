@@ -2,9 +2,10 @@ from datasets.DataSets import DataSet
 from save_load import load_obj
 from similarity import run_similarity, levenshtein
 import pandas as pd
+import pytest
 
 #Similarity module tests:
-def sim_test():
+def test_sim():
     #expected score 0
     SMILES = 'dog'
     dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
