@@ -20,20 +20,52 @@ if next_action == "1":
     print("")
     print("which dataset will you use? Your options are: ")
     print("")
-    for key in dataframes:
-        print(key)
-    print("")
-    ds_key = input(":> ")
-    print("")
+    rego = 'Y'
+    ds_no = 0
+    while rego.lower() == 'y':
+        n=1
+        for key in dataframes:
+            print(str(n) + ". " + key)
+            n = n + 1
+        n=1
+        print("")
+        ds_no = int(input(":> "))
+        print("")
 
-    df = dataframes[ds_key]
-    print(df.headers)
+        p=1
+        for key in dataframes:
+            if ds_no == p:
+                ds_key = key
+            p = p + 1
+        p=1
+        if not ds_key:
+            print("Sorry, that's not a valid entry, please select a number")
+            rego = input("Would you like to try again? Type Y for yes or N for no :> ")
+        else:
+            rego = 'N'
 
-    columns = input("Which column contains the smiles you'd like to compare to :> ")
+    regoz = 'Y'
+    while regoz.lower() =='y':
+
+        print(dataframes[ds_key].headers)
+        print("")
+
+        columns = input("Which column contains the smiles you'd like to compare to :> ")
+        print("")
+
+        if not columns:
+            print("Sorry, that's not a valid entry, please type a column header exactly")
+            regoz = input("Would you like to try again? Type Y for yes or N for no :> ")
+        else:
+            regoz = 'N'
+
 
     SMILES = input("Paste or type the SMILES you'd like to score similarity for :> ")
+    print("")
 
-    datasets[ds] = run_similarity(df,columns,SMILES)
+    dataframes[ds_key].dataframe = run_similarity(dataframes[ds_key].dataframe,columns,SMILES)
+
+    print(dataframes[ds_key].dataframe)
 
 elif next_action == "2":
 

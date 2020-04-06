@@ -13,11 +13,10 @@ class DataSet(object):
     #initialises the object from a drive url and returns the resulting dataframe
     def __init__(self, drive_url):
 
-        self.drive_url = drive_url
-        self.csv_file = urllib.request.urlopen(drive_url)
+        csv_file = urllib.request.urlopen(drive_url)
 
         #the dataframe is read in chunks of 100 rows at a time and the headers are read
-        self.chunks = pd.read_csv(self.csv_file, error_bad_lines=False, chunksize = 100)
+        self.chunks = pd.read_csv(csv_file, error_bad_lines=False, chunksize = 100)
 
         dfList = []
         for df in self.chunks:
