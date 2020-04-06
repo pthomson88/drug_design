@@ -20,6 +20,7 @@ if next_action == "1":
     print("")
     print("which dataset will you use? Your options are: ")
     print("")
+<<<<<<< HEAD
     rego = 'Y'
     ds_no = 0
     while rego.lower() == 'y':
@@ -66,6 +67,21 @@ if next_action == "1":
     dataframes[ds_key].dataframe = run_similarity(dataframes[ds_key].dataframe,columns,SMILES)
 
     print(dataframes[ds_key].dataframe)
+=======
+    for key in dataframes:
+        print(key)
+    print("")
+    ds_key = input(":> ")
+    print("")
+
+    df = dataframes[ds_key]
+
+    columns = input("Which column contains the smiles you'd like to compare to :> ")
+
+    SMILES = input("Paste or type the SMILES you'd like to score similarity for :> ")
+
+    datasets[ds] = run_similarity(df,columns,SMILES)
+>>>>>>> similarity1
 
 elif next_action == "2":
 

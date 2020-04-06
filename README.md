@@ -10,13 +10,13 @@ Get setup on Github and git:
 
 Next clone the repo and get stuck in:
 * In your terminal window you'll want to navigate to a sensible directory
-   * If you have a folder in your home drive called projects that you'd like to keep this in then in a unix environment (mac or linux) use the command: 
-     
-``` 
+   * If you have a folder in your home drive called projects that you'd like to keep this in then in a unix environment (mac or linux) use the command:
+
+```
 cd projects
 ```
    * From here you'll want to clone the repository with the command:
-     
+
 ```
 git clone git@github.com:pthomson88/drug_design.git
 ```
@@ -29,7 +29,7 @@ Next up you'll want to install miniconda:
 cd ..
 ```
 
-``` 
+```
 cd projects
 ```
 
@@ -37,7 +37,7 @@ cd projects
 cd drug_design
 ```
    * Now to load the environment:
-``` 
+```
 conda env create -f drug_design.yml
 ```
 * Finally you'll want to get going so activate your new conda environment:
@@ -82,7 +82,14 @@ test_download
 *******************
 
 ```
+Remember load_data - you'll need to run this function whenever you want to start:
 
+### Prerequisites
+
+Useful functions:
+
+* ```load_data.py``` - we've already explored - loads all the dataframes you need into a dictionary object called df
+* ```similarity.py``` - takes in 2 strings and tells you how similar one is to another
 
 ### Prerequisites
 
