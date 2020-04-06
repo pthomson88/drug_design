@@ -5,7 +5,7 @@ import pandas as pd
 
 #Take a dataframe with SMILES strings and one target SMILES then add a column of the scores
 def run_similarity(dataframe,column_key,SMILES):
-<<<<<<< HEAD
+
     dataframe['sim_score_'+SMILES] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
     return dataframe
 
@@ -13,13 +13,6 @@ def run_similarity(dataframe,column_key,SMILES):
 def levenshtein(seqA, seqB):
     seq1 = str(seqA)
     seq2 = str(seqB)
-=======
-    dataframe['sim_score'+SMILES] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
-    return dataframe
-
-#the minimum number of insertions, deletions and substitutions required to turn 1 string into another
-def levenshtein(seq1, seq2):
->>>>>>> similarity1
     size_x = len(seq1) + 1
     size_y = len(seq2) + 1
     matrix = np.zeros ((size_x, size_y))
