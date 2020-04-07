@@ -86,8 +86,9 @@ Remember load_data - you'll need to run this function whenever you want to start
 
 ### Prerequisites
 
-Useful functions:
+Useful functions and modules:
 
+* ```pytest``` tests are stored in test_.py . Running them with the ```pytest``` command is a great way to check that everything is set up correctly and working - it's also useful if you've made changes and want to make sure the code still works
 * ```load_data.py``` - we've already explored - loads all the dataframes you need into a dictionary object called df
 * ```similarity.py``` - takes in 2 strings and tells you how similar one is to another
 
