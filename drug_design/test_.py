@@ -1,4 +1,5 @@
-import drug_design
+from .load_data import load_data
+from .similarity import run_similarity
 
 import pandas as pd
 import pytest
