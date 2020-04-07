@@ -4,7 +4,6 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 import urllib.request
 import pandas as pd
-import dask.dataframe as dd
 
 #Class definition of a dataset
 class DataSet(object):

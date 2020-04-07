@@ -1,4 +1,4 @@
-from save_load import save_obj, load_obj
+from .save_load import save_obj, load_obj
 
 url_dict = load_obj('url_dict')
 

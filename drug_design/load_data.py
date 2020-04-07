@@ -1,6 +1,6 @@
 #We need to import the DataSet class and load the dictionary of urls
-from datasets.DataSets import DataSet
-from save_load import load_obj
+from .datasets.DataSets import DataSet
+from .save_load import load_obj
 
 def load_data():
 

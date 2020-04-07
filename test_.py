@@ -1,7 +1,4 @@
-from datasets.DataSets import DataSet
-from save_load import load_obj
-from similarity import run_similarity, levenshtein
-from load_data import load_data
+import drug_design
 
 import pandas as pd
 import pytest
@@ -17,6 +14,12 @@ def test_sim():
     df = run_similarity(dataframe,"col1",word)
 
     assert int(df['sim_score_' + word].values) == 1
+
+#Tests for non standard entities - e.g. integers, floats and lists
+
+#Tests for errors being returned if column keys don't match
+
+#test for if dataframe isn't a dataframe
 
 #load_data tests:
 #Happy path using test test_download
@@ -40,8 +43,11 @@ def test_load_data_fail1(monkeypatch):
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
     i = load_data()
-    df = i["an unlikely anme for a dataset"].dataframe
+    df = i["an unlikely name for a dataset"].dataframe
     sys.stdout = sys.__stdout__                   # Reset redirect.
 
     assert ("error" in capturedOutput.getvalue() or "Error" in capturedOutput.getvalue() or "ERROR" in capturedOutput.getvalue() ) and not isinstance(df, pd.DataFrame)
+
 #Not a csv
+
+#Tests for the add_gsheet_url module
