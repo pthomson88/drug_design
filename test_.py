@@ -7,10 +7,11 @@ import pytest
 #Similarity module tests:
 def test_sim():
     #expected score 0
-    SMILES = 'dog'
+    word = "dogs"
     dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
-    df = run_similarity(dataframe,"col1","dog")
-    assert df['sim_score_dog'] == 0
+    df = run_similarity(dataframe,"col1",word)
+
+    assert int(df['sim_score_' + word].values) == 1
 #load_data tests
 
 
