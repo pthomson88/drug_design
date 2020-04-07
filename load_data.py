@@ -16,9 +16,6 @@ def load_data():
 
     print("")
 
-        #create a new dictionary with the datasets to load
-    files = {}
-
     #create a new dictionary with the datasets to load
     files = {}
 
