@@ -85,11 +85,10 @@ def test_load_data_fail1(monkeypatch):
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
     i = load_data()
-    df = i["an unlikely name for a dataset"].dataframe
 
     sys.stdout = sys.__stdout__                   # Reset redirect.
 
-    assert ("error" in capturedOutput.getvalue().lower()) and not isinstance(df, pd.DataFrame)
+    assert ("error" in capturedOutput.getvalue().lower()) 
 
 #Can't be converted to a csv
 
@@ -112,6 +111,7 @@ def test_no_csv(monkeypatch):
     #you should end up with an error message
 
 #Tests for the add_gsheet_url module
+#add a url to the dict and check it's there
 def test_gsheet_happy(monkeypatch):
 
     #make sure there is mo test_key
@@ -127,3 +127,9 @@ def test_gsheet_happy(monkeypatch):
     k = load_obj('url_dict')
 
     assert 'test_key' in k and 'test_entry1' in k['test_key']
+
+#Delete an entry from the url_dict dictionary
+
+#Try and load a non-existant objects
+
+#Delete an object

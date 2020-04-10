@@ -26,7 +26,7 @@ class DataSet(object):
         for df in self.chunks:
             dfList.append(df)
 
-        self.dataframe = pd.concat(dfList,sort=False)
+            self.dataframe = pd.concat(dfList,sort=False)
 
         self.headers = [c for c in self.dataframe]
 

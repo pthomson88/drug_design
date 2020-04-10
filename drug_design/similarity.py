@@ -6,14 +6,18 @@ import pandas as pd
 #Take a dataframe with SMILES strings and one target SMILES then add a column of the scores
 def run_similarity(dataframe,column_key,SMILES):
 
-    if column_key in dataframe.columns:
+    if isinstance(dataframe, pd.DataFrame):
 
-        dataframe['sim_score_' + str(SMILES)] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
-        return dataframe
+        if column_key in dataframe.columns:
 
+            dataframe['sim_score_' + str(SMILES)] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
+            return dataframe
+
+        else:
+            print("Error: I'm sorry I couldn't find that column in the dataframe you submitted")
     else:
-        print("Error: I'm sorry I couldn't find that column in the dataframe you submitted")
-    
+        print("Error: It looks like your dataframe isn't a pandas DataFrame")
+
 #the minimum number of insertions, deletions and substitutions required to turn 1 string into another
 def levenshtein(seqA, seqB):
     seq1 = str(seqA)
