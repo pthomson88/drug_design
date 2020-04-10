@@ -5,5 +5,8 @@ def save_obj(obj, name ):
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 def load_obj(name ):
-    with open('./obj/' + name + '.pkl', 'rb') as f:
-        return pickle.load(f)
+    try:
+        with open('./obj/' + name + '.pkl', 'rb') as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        print("Error: I couldn't find a file with that name")

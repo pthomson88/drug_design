@@ -88,7 +88,7 @@ def test_load_data_fail1(monkeypatch):
 
     sys.stdout = sys.__stdout__                   # Reset redirect.
 
-    assert ("error" in capturedOutput.getvalue().lower()) 
+    assert ("error" in capturedOutput.getvalue().lower())
 
 #Can't be converted to a csv
 
@@ -128,8 +128,15 @@ def test_gsheet_happy(monkeypatch):
 
     assert 'test_key' in k and 'test_entry1' in k['test_key']
 
-#Delete an entry from the url_dict dictionary
-
 #Try and load a non-existant objects
+def test_load_absent_obj():
 
-#Delete an object
+        capturedOutput = io.StringIO()          # Create StringIO object
+        sys.stdout = capturedOutput                   #  and redirect stdout.
+
+        k=load_obj('not_and_object')
+
+        sys.stdout = sys.__stdout__                   # Reset redirect.
+
+        assert "error" in capturedOutput.getvalue().lower()
+        #you should end up with an error message
