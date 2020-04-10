@@ -17,77 +17,84 @@ def main():
 
                 dataframes = load_data()
 
-            print("What would you like to do next? \n Your options are:")
+            retry = True
+            while retry == True:
+                print("What would you like to do next? \n Your options are:")
 
-            next_action = input(" \n1. Similarity score \n2. Load more data \n3. Clear my loaded data \n4. Quit \n \n :> ")
+                next_action = input(" \n1. Similarity score \n2. Load more data \n3. Clear my loaded data \n4. Quit \n \n :> ")
 
-            if next_action == "1":
-                print("")
-                print("which dataset will you use? Your options are: ")
-                print("")
-
-                rego = 'Y'
-                ds_no = 0
-                while rego.lower() == 'y':
-                    n=1
-                    for key in dataframes:
-                        print(str(n) + ". " + key)
-                        n = n + 1
-                    n=1
+                if next_action == "1":
                     print("")
-                    ds_no = int(input(":> "))
+                    print("which dataset will you use? Your options are: ")
                     print("")
 
-                    p=1
-                    for key in dataframes:
-                        if ds_no == p:
-                            ds_key = key
-                        p = p + 1
-                    p=1
-                    if not ds_key:
-                        print("Sorry, that's not a valid entry, please select a number")
-                        rego = input("Would you like to try again? Type Y for yes or N for no :> ")
-                    else:
-                        rego = 'N'
+                    rego = 'Y'
+                    ds_no = 0
+                    while rego.lower() == 'y':
+                        n=1
+                        for key in dataframes:
+                            print(str(n) + ". " + key)
+                            n = n + 1
+                        n=1
+                        print("")
+                        ds_no = int(input(":> "))
+                        print("")
 
-                regoz = 'Y'
-                while regoz.lower() =='y':
+                        p=1
+                        for key in dataframes:
+                            if ds_no == p:
+                                ds_key = key
+                            p = p + 1
+                        p=1
+                        if not ds_key:
+                            print("Error: Sorry, that's not a valid entry, please select a number")
+                            rego = input("Would you like to try again? Type Y for yes or N for no :> ")
+                        else:
+                            rego = 'N'
 
-                    print(dataframes[ds_key].headers)
+                    regoz = 'Y'
+                    while regoz.lower() =='y':
+
+                        print(dataframes[ds_key].headers)
+                        print("")
+
+                        columns = input("Which column contains the smiles you'd like to compare to :> ")
+                        print("")
+
+                        if not columns:
+                            print("Sorry, that's not a valid entry, please type a column header exactly")
+                            regoz = input("Would you like to try again? Type Y for yes or N for no :> ")
+                        else:
+                            regoz = 'N'
+
+
+                    SMILES = input("Paste or type the SMILES you'd like to score similarity for :> ")
                     print("")
 
-                    columns = input("Which column contains the smiles you'd like to compare to :> ")
+                    dataframes[ds_key].dataframe = run_similarity(dataframes[ds_key].dataframe,columns,SMILES)
+
+                    print(dataframes[ds_key].dataframe)
+
+                elif next_action == "2":
+
                     print("")
+                    print("Lets load some more data: ")
+                    dataframes.update(load_data())
 
-                    if not columns:
-                        print("Sorry, that's not a valid entry, please type a column header exactly")
-                        regoz = input("Would you like to try again? Type Y for yes or N for no :> ")
-                    else:
-                        regoz = 'N'
+                elif next_action == "3":
 
+                    print("")
+                    print("Clearing the data currently loaded... ")
+                    dataframes = {}
 
-                SMILES = input("Paste or type the SMILES you'd like to score similarity for :> ")
-                print("")
+                elif next_action == "4":
+                    quit = True
+                    print("See you next time... \n")
+                    retry = False
 
-                dataframes[ds_key].dataframe = run_similarity(dataframes[ds_key].dataframe,columns,SMILES)
-
-                print(dataframes[ds_key].dataframe)
-
-            elif next_action == "2":
-
-                print("")
-                print("Lets load some different data: ")
-                dataframes.update(load_data())
-
-            elif next_action == "3":
-
-                print("")
-                print("Clearing the data currently loaded... ")
-                dataframes = {}
-
-            else:
-                quit = True
-                print("See you next time... \n")
+                else:
+                    print("Error: Something went wrong there. Make sure you are entering a number")
+                    print("(Remember you can use Ctrl-C to escape at any time)")
 
     except KeyboardInterrupt:
         print("\nSee you next time... \n")

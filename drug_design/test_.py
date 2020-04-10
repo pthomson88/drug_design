@@ -2,11 +2,26 @@ from .load_data import load_data
 from .similarity import run_similarity
 from .add_gsheet_url import add_gsheet_url
 from .save_load import save_obj, load_obj
+from.__main__ import init
 
 import pandas as pd
 import pytest
 import io
 import sys
+
+#Main module tests
+#If I don't answer numerically to a numbered choice list I should be shown an error and askey to try again
+def test_main_choices(monkeypatch):
+    responses = iter(['test_download', 'n', 'this is not a number'])
+    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
+    capturedOutput = io.StringIO()          # Create StringIO object
+    sys.stdout = capturedOutput                #  and redirect stdout.
+
+    init()
+
+    sys.stdout = sys.__stdout__
+
+    assert "error" in capturedOutput.getvalue().lower() 
 
 #Similarity module tests:
 #check that the similarity score makes sense in a basic test
@@ -23,10 +38,11 @@ def test_sim_int():
     #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
     word = 543
     dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
-    df = run_similarity(dataframe,"col1",word)
 
     capturedOutput = io.StringIO()                # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
+
+    df = run_similarity(dataframe,"col1",word)
 
     sys.stdout = sys.__stdout__
 

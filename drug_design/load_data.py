@@ -25,7 +25,7 @@ def load_data():
         try:
             files[dataset_name]= DataSet(url_dict[dataset_name])
         except:
-            print("Error: I'm sorry, I couldn't load that dataset - please make sure it is a google sheet \n(remember you can hit Ctrl-C at any timee to quit)")
+            print("Error: I'm sorry, I couldn't load that dataset - please make sure it is a google sheet \n(remember you can hit Ctrl-C at any time to quit)")
 
     #give the option to load more than one dataset
         cont = input("Would you like to load another dataset? enter Y for yes or N for no :> ")
