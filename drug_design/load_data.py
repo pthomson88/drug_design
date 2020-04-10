@@ -23,7 +23,10 @@ def load_data():
     while cont.lower() == 'y':
     #Ask the user for a file and add create a new file entry with the dataset_name as key and a DataSet object as the value
         dataset_name = input("Which dataset would you like to load :> ")
-        files[dataset_name]= DataSet(url_dict[dataset_name])
+        try:
+            files[dataset_name]= DataSet(url_dict[dataset_name])
+        except:
+            print("Error: I'm sorry, I couldn't load that dataset - please make sure it is a google sheet")
 
     #give the option to load more than one dataset
         cont = input("Would you like to load another dataset? enter Y for yes or N for no :> ")

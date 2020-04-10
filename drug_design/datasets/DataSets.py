@@ -12,10 +12,15 @@ class DataSet(object):
     #initialises the object from a drive url and returns the resulting dataframe
     def __init__(self, drive_url):
 
-        csv_file = urllib.request.urlopen(drive_url)
-
+        try:
+            csv_file = urllib.request.urlopen(drive_url)
+        except:
+            #print("Error: I can't seem to load that file - please check you are requesting a Google Sheet format.")
+            raise RuntimeError("This might not be a google sheet...")
         #the dataframe is read in chunks of 100 rows at a time and the headers are read
         self.chunks = pd.read_csv(csv_file, error_bad_lines=False, chunksize = 100)
+
+
 
         dfList = []
         for df in self.chunks:

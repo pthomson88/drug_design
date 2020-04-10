@@ -1,5 +1,7 @@
 from .load_data import load_data
 from .similarity import run_similarity
+from .add_gsheet_url import add_gsheet_url
+from .save_load import save_obj, load_obj
 
 import pandas as pd
 import pytest
@@ -17,10 +19,49 @@ def test_sim():
     assert int(df['sim_score_' + word].values) == 1
 
 #Tests for non standard entities - e.g. integers, floats and lists
+def test_sim_int():
+    #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
+    word = 543
+    dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
+    df = run_similarity(dataframe,"col1",word)
+
+    capturedOutput = io.StringIO()                # Create StringIO object
+    sys.stdout = capturedOutput                   #  and redirect stdout.
+
+    sys.stdout = sys.__stdout__
+
+    assert ( "error" in capturedOutput.getvalue().lower() ) or ( int(df['sim_score_' + str(word)].values) == 3 )
+
 
 #Tests for errors being returned if column keys don't match
+def test_sim_keys_dont_match():
+    #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
+    word = "dog"
+    dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
+
+    capturedOutput = io.StringIO()                # Create StringIO object
+    sys.stdout = capturedOutput                   #  and redirect stdout.
+
+    df = run_similarity(dataframe,"col2",word)
+
+    sys.stdout = sys.__stdout__
+
+    assert "error" in capturedOutput.getvalue().lower()
 
 #test for if dataframe isn't a dataframe
+def test_sim_not_a_df():
+    #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
+    word = "dog"
+    dataframe = {"col1" : ["dog"]}        #dataframe is a dictionary instead
+
+    capturedOutput = io.StringIO()                # Create StringIO object
+    sys.stdout = capturedOutput                   #  and redirect stdout.
+
+    df = run_similarity(dataframe,"col2",word)
+
+    sys.stdout = sys.__stdout__
+
+    assert "error" in capturedOutput.getvalue().lower() #some sort of error message should be displayed
 
 #load_data tests:
 #Happy path using test test_download
@@ -39,16 +80,50 @@ def test_load_data(monkeypatch):
 #Keys don't match
 def test_load_data_fail1(monkeypatch):
 
-    monkeypatch.setattr('builtins.input', lambda x: "an unlikely anme for a dataset")
+    monkeypatch.setattr('builtins.input', lambda x: "an unlikely name for a dataset")
     capturedOutput = io.StringIO()          # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
     i = load_data()
     df = i["an unlikely name for a dataset"].dataframe
+
     sys.stdout = sys.__stdout__                   # Reset redirect.
 
-    assert ("error" in capturedOutput.getvalue() or "Error" in capturedOutput.getvalue() or "ERROR" in capturedOutput.getvalue() ) and not isinstance(df, pd.DataFrame)
+    assert ("error" in capturedOutput.getvalue().lower()) and not isinstance(df, pd.DataFrame)
 
-#Not a csv
+#Can't be converted to a csv
+
+def test_no_csv(monkeypatch):
+
+    #give responses in a sensible order - note the google id to a google image as the first
+    responses = iter(['1Rw9DkxM_rzmS59qPS-TF6JV9MAu8LJtB', 'not_a_csv', 'N', 'not_a_csv', 'N'])
+    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
+    capturedOutput = io.StringIO()          # Create StringIO object
+    sys.stdout = capturedOutput                   #  and redirect stdout.
+
+    #load the image as if it were a potential new dataset
+    j = add_gsheet_url()
+    #next try and load it into a dataframe - this will fail
+    i = load_data()
+
+    sys.stdout = sys.__stdout__                   # Reset redirect.
+
+    assert "error" in capturedOutput.getvalue().lower()
+    #you should end up with an error message
 
 #Tests for the add_gsheet_url module
+def test_gsheet_happy(monkeypatch):
+
+    #make sure there is mo test_key
+    k = load_obj('url_dict')
+    if 'test_key' in k:
+        del k['test_key']
+        save_obj(k,'url_dict')
+
+    responses = iter(['test_entry1', 'test_key', 'N'])
+    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
+
+    j = add_gsheet_url()
+    k = load_obj('url_dict')
+
+    assert 'test_key' in k and 'test_entry1' in k['test_key']
