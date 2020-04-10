@@ -7,7 +7,6 @@ def load_data():
     url_dict = load_obj('url_dict')
 
     #list the available dataset keys
-    print("")
     print("The available dataset keys are : ")
     print("")
 
@@ -26,7 +25,7 @@ def load_data():
         try:
             files[dataset_name]= DataSet(url_dict[dataset_name])
         except:
-            print("Error: I'm sorry, I couldn't load that dataset - please make sure it is a google sheet")
+            print("Error: I'm sorry, I couldn't load that dataset - please make sure it is a google sheet \n(remember you can hit Ctrl-C at any timee to quit)")
 
     #give the option to load more than one dataset
         cont = input("Would you like to load another dataset? enter Y for yes or N for no :> ")
@@ -37,7 +36,7 @@ def load_data():
     #     df[key]= files[key].dataframe
 
     #check it all worked
-    print("")
+    print("\n New data added: \n")
     for key in files:
         print(key)
         print("*******************")
