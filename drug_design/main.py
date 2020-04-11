@@ -1,5 +1,6 @@
 from .load_data import load_data
 from .similarity import run_similarity
+from .gsheet_store import gsheet_store
 import pandas as pd
 
 #The main function to take you through options
@@ -21,7 +22,7 @@ def main():
             while retry == True:
                 print("What would you like to do next? \n Your options are:")
 
-                next_action = input(" \n1. Similarity score \n2. Load more data \n3. Clear my loaded data \n4. Quit \n \n :> ")
+                next_action = input(" \n1. Similarity score \n2. Load more data \n3. Clear my loaded data \n4. Link or unlink a dataset \n5. Quit \n \n :> ")
 
                 if next_action == "1":
                     print("")
@@ -88,6 +89,9 @@ def main():
                     dataframes = {}
 
                 elif next_action == "4":
+                    gsheet_store()
+
+                elif next_action == "5":
                     quit = True
                     print("See you next time... \n")
                     retry = False

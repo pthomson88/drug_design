@@ -1,6 +1,6 @@
 from .load_data import load_data
 from .similarity import run_similarity
-from .add_gsheet_url import add_gsheet_url
+from .gsheet_store import *
 from .save_load import save_obj, load_obj
 from.__main__ import init
 
@@ -21,7 +21,7 @@ def test_main_choices(monkeypatch):
 
     sys.stdout = sys.__stdout__
 
-    assert "error" in capturedOutput.getvalue().lower() 
+    assert "error" in capturedOutput.getvalue().lower()
 
 #Similarity module tests:
 #check that the similarity score makes sense in a basic test
@@ -130,19 +130,58 @@ def test_no_csv(monkeypatch):
 #add a url to the dict and check it's there
 def test_gsheet_happy(monkeypatch):
 
-    #make sure there is mo test_key
+    #make sure there is no test_key
     k = load_obj('url_dict')
     if 'test_key' in k:
         del k['test_key']
         save_obj(k,'url_dict')
 
-    responses = iter(['test_entry1', 'test_key', 'N'])
+    responses = iter(['1','test_entry1', 'test_key', 'N', '3'])
     monkeypatch.setattr('builtins.input', lambda msg: next(responses))
 
-    j = add_gsheet_url()
+    j = gsheet_store()
     k = load_obj('url_dict')
 
     assert 'test_key' in k and 'test_entry1' in k['test_key']
+
+#remove url to the dict and check it's worked
+def test_gsheet_delete(monkeypatch):
+
+    #make sure there is a test_key
+    k = load_obj('url_dict')
+    if not 'test_key' in k:
+        k.update({'test_key' : 'junk test data to be removed'})
+        save_obj(k,'url_dict')
+
+    responses = iter(['2','test_key', 'N', '3'])
+    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
+
+    j = gsheet_store()
+    k = load_obj('url_dict')
+
+    assert not 'test_key' in k
+
+#Key mismatch in deleting data
+def test_gsheet_delete(monkeypatch):
+
+    capturedOutput = io.StringIO()          # Create StringIO object
+    sys.stdout = capturedOutput                   #  and redirect stdout.
+
+    #make sure there is a test_key
+    k = load_obj('url_dict')
+    if not 'test_key' in k:
+        k.update({'test_key' : 'junk test data to be removed'})
+        save_obj(k,'url_dict')
+
+    responses = iter(['2','mismatched_key', 'N', '3'])
+    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
+
+    j = gsheet_store()
+    k = load_obj('url_dict')
+
+    sys.stdout = sys.__stdout__                   # Reset redirect.
+
+    assert 'test_key' in k and "error" in capturedOutput.getvalue().lower()
 
 #Try and load a non-existant objects
 def test_load_absent_obj():
