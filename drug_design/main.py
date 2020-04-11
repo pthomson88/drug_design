@@ -102,3 +102,6 @@ def main():
 
     except KeyboardInterrupt:
         print("\nSee you next time... \n")
+        
+if __name__ == '__main__':
+    main()

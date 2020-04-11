@@ -2,7 +2,7 @@ from .load_data import load_data
 from .similarity import run_similarity
 from .gsheet_store import *
 from .save_load import save_obj, load_obj
-from.__main__ import init
+from .main import main
 
 import pandas as pd
 import pytest
@@ -12,12 +12,14 @@ import sys
 #Main module tests
 #If I don't answer numerically to a numbered choice list I should be shown an error and askey to try again
 def test_main_choices(monkeypatch):
-    responses = iter(['test_download', 'n', 'this is not a number'])
-    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
+
     capturedOutput = io.StringIO()          # Create StringIO object
     sys.stdout = capturedOutput                #  and redirect stdout.
 
-    init()
+    responses = iter(["", 'this is not a number', '5'])
+    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
+
+    main()
 
     sys.stdout = sys.__stdout__
 
