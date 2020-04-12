@@ -1,5 +1,5 @@
 from .load_data import load_data
-from .similarity import run_similarity
+from .similarity import *
 from .gsheet_store import *
 from .save_load import save_obj, load_obj
 from .main import main
@@ -26,41 +26,57 @@ def test_main_choices(monkeypatch):
     assert "error" in capturedOutput.getvalue().lower()
 
 #Similarity module tests:
-#check that the similarity score makes sense in a basic test
-def test_sim():
-    #expected score 1
-    word = "dogs"
-    dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
-    df = run_similarity(dataframe,"col1",word)
+#check that the similarity score makes sense in a basic test using main as entry point
+def test_sim(monkeypatch):
 
-    assert int(df['sim_score_' + word].values) == 1
+    capturedOutput = io.StringIO()
+    sys.stdout = capturedOutput
+
+    responses = iter(["test_download", "N", "1", "1", "a", "dog", "5"])
+    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
+
+    main()
+
+    sys.stdout = sys.__stdout__
+
+    #check the new column is added
+    assert "sim_score_dog" in capturedOutput.getvalue()
+
+#check similarity score directly
+def test_sim2():
+    word = {"word" : "dogs"}
+    dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
+
+    dataframe = run_similarity(dataframe,"col1",**word)
+
+    assert isinstance(dataframe, pd.DataFrame) and int(dataframe["sim_score_dogs"]) == 1
 
 #Tests for non standard entities - e.g. integers, floats and lists
 def test_sim_int():
     #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
-    word = 543
+    word = {"word" : 543}
     dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
 
     capturedOutput = io.StringIO()                # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
-    df = run_similarity(dataframe,"col1",word)
+    df = run_similarity(dataframe,"col1",**word)
 
     sys.stdout = sys.__stdout__
 
-    assert ( "error" in capturedOutput.getvalue().lower() ) or ( int(df['sim_score_' + str(word)].values) == 3 )
+    assert ( "error" in capturedOutput.getvalue().lower() ) or ( int(df['sim_score_' + str(word["word"])].values) == 3 )
 
 
 #Tests for errors being returned if column keys don't match
 def test_sim_keys_dont_match():
     #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
-    word = "dog"
+    word = {"word" : "dog"}
     dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
 
     capturedOutput = io.StringIO()                # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
-    df = run_similarity(dataframe,"col2",word)
+    df = run_similarity(dataframe,"col2",**word)
 
     sys.stdout = sys.__stdout__
 
@@ -69,17 +85,37 @@ def test_sim_keys_dont_match():
 #test for if dataframe isn't a dataframe
 def test_sim_not_a_df():
     #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
-    word = "dog"
+    word = {"word" : "dog"}
     dataframe = {"col1" : ["dog"]}        #dataframe is a dictionary instead
 
     capturedOutput = io.StringIO()                # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
-    df = run_similarity(dataframe,"col2",word)
+    df = run_similarity(dataframe,"col2",**word)
 
     sys.stdout = sys.__stdout__
 
     assert "error" in capturedOutput.getvalue().lower() #some sort of error message should be displayed
+
+#Test to check happy path for checking similarity fo strings in one dataframe to those in another
+def test_sim_df_df(monkeypatch):
+
+    df_source = pd.DataFrame(data = {"col1" : ["dog"]})
+    df_reference = pd.DataFrame(data = {"col2" : ["dogs", "cats"]})
+
+    df2 = {"df_reference" : df_reference}
+
+    monkeypatch.setattr('builtins.input', lambda x: "col2")
+
+    df_source = run_similarity(df_source,"col1",**df2)
+
+    assert df_source['sim_score_df_reference_col2'].values[0] == 1
+
+#Keys don't match in 2nd DataFrame
+
+#2nd dataframe isn't a dataframe but should be useable - e.g. lists, strings, integers
+
+#2nd dataframe isn't a dataframe and isn't useable - e.g. custom class object, image etc.
 
 #load_data tests:
 #Happy path using test test_download
@@ -109,7 +145,6 @@ def test_load_data_fail1(monkeypatch):
     assert ("error" in capturedOutput.getvalue().lower())
 
 #Can't be converted to a csv
-
 def test_no_csv(monkeypatch):
 
     #give responses in a sensible order - note the google id to a google image as the first

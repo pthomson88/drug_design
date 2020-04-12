@@ -72,7 +72,9 @@ def main():
                     SMILES = input("Paste or type the SMILES you'd like to score similarity for :> ")
                     print("")
 
-                    dataframes[ds_key].dataframe = run_similarity(dataframes[ds_key].dataframe,columns,SMILES)
+                    mol_reference = {"SMILES" : SMILES}
+
+                    dataframes[ds_key].dataframe = run_similarity(dataframes[ds_key].dataframe,columns,**mol_reference)
 
                     print(dataframes[ds_key].dataframe)
 
@@ -102,6 +104,6 @@ def main():
 
     except KeyboardInterrupt:
         print("\nSee you next time... \n")
-        
+
 if __name__ == '__main__':
     main()
