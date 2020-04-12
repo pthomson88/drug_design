@@ -2,7 +2,7 @@ import pickle
 
 def save_obj(obj, name ):
     with open('./obj/'+ name + '.pkl', 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(obj, f, protocol=4)
 
 def load_obj(name ):
     try:

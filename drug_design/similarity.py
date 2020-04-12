@@ -2,7 +2,6 @@
 #this approach was taken from: https://stackabuse.com/levenshtein-distance-and-text-similarity-in-python/
 import numpy as np
 import pandas as pd
-from varname import varname
 
 #Take a dataframe with SMILES strings and one target SMILES then add a column of the scores
 def run_similarity(dataframe,column_key,**kwargs):

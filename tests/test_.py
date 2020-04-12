@@ -1,8 +1,8 @@
-from .load_data import load_data
-from .similarity import *
-from .gsheet_store import *
-from .save_load import save_obj, load_obj
-from .main import main
+from drug_design.load_data import *
+from drug_design.similarity import *
+from drug_design.gsheet_store import *
+from drug_design.save_load import save_obj, load_obj
+from main import *
 
 import pandas as pd
 import pytest
@@ -19,7 +19,7 @@ def test_main_choices(monkeypatch):
     responses = iter(["", 'this is not a number', '5'])
     monkeypatch.setattr('builtins.input', lambda msg: next(responses))
 
-    main()
+    DrugDesign.main()
 
     sys.stdout = sys.__stdout__
 
@@ -35,7 +35,7 @@ def test_sim(monkeypatch):
     responses = iter(["test_download", "N", "1", "1", "a", "dog", "5"])
     monkeypatch.setattr('builtins.input', lambda msg: next(responses))
 
-    main()
+    DrugDesign.main()
 
     sys.stdout = sys.__stdout__
 
