@@ -38,28 +38,35 @@ cd drug_design
 ```
    * Now to load the environment:
 ```
-conda env create -f drug_design.yml
+conda env create --prefix ./env -f drug_design.yml
 ```
 * Finally you'll want to get going so activate your new conda environment:
 ```
-conda activate drug_design
+conda activate ./env
 
 ```
 
-To test it's all working try and load some test data:
+To test it's all working try and load some test data using the python shell:
 
 ```
-python load_data.py
+python
+
+from drug_design.load_data import *
+
+load_data()
 ```
 
-You should see:
+You should see an output like the following in your terminal:
 ```
 The available dataset keys are :
 
 test_download
 chembl26_ph3_ph4
+chembl26_similar_protein_mols
+not_a_csv
+test_key
 
-Which dataset would you like to load :>
+Which dataset would you like to load. If you'd like to skip this step just press enter :>
 ```
 Type ```test_download``` exactly
 
@@ -81,8 +88,14 @@ test_download
 3  5  e
 *******************
 
+
+{'test_download': <drug_design.datasets.DataSets.DataSet object at 0x10c717c40>}
 ```
-Remember load_data - you'll need to run this function whenever you want to start:
+
+To exit the shell type
+```
+quit()
+```
 
 ### Prerequisites
 
