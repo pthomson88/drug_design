@@ -7,7 +7,7 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-#The main function to take you through options
+#The main function to take you through option 
 @app.route("/")
 def main():
     msg = "Welcome to the main page"
