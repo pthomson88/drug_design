@@ -10,7 +10,7 @@ The available dataset keys are :
 Please type your choice exactly :
 </h2>
 
-<form name = "dataset list" method = "POST">
-  <input name="dataset choice">
+<form action = "{{ url_for('do_things')}}" name = "dataset list" method = "POST">
+  <input name="dataset_choice">
   <input type="submit">
 </form>

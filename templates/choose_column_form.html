@@ -1,0 +1,19 @@
+<h2>
+The available column headers are :
+</h2>
+
+{%for item in Columns %}
+  <p>{{ item }}</p>
+{%endfor%}
+
+<h2>
+Please type your choice of column exactly and the SMILES you'd like to use :
+</h2>
+
+<form action = "{{ url_for('similarity_score_page')}}" name = "dataset list" method = "POST">
+  <p>Which column?</p>
+  <input name="column_choice">
+  <p>What SMILES?</p>
+  <input name="Smiles">
+  <input type="submit">
+</form>

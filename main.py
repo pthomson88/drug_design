@@ -2,7 +2,7 @@ from drug_design.load_data import load_data
 from drug_design.similarity import run_similarity
 from drug_design.gsheet_store import gsheet_store
 from drug_design.datasets.DataSets import DataSet
-from drug_design.save_load import load_obj
+from drug_design.save_load import load_obj, save_obj
 import pandas as pd
 import drug_design
 
@@ -29,7 +29,7 @@ def example_load_data_post():
     text = request.form['text']
     text2 = request.form['text2']
     processed_text = text.upper() + text2.upper()
-    return processed_text
+    return render_template('welcome_page.html', var1 = processed_text, var2 = 'hello', var3 = 'howdy')
 
 #Load data
 @app.route('/load_data/')
@@ -37,13 +37,28 @@ def load_data_form():
     url_dict = load_obj('url_dict')
     return render_template('load_data_form.html', Datafiles = url_dict)
 
-@app.route('/load_data/', methods=['POST'])
-def load_data_post():
-    key = request.form['dataset choice']
-    loaded_data = load_data(key).to_html()
-    return loaded_data
+@app.route('/do_things/', methods=['POST'])
+def do_things():
+    key = request.form['dataset_choice']
+    save_obj(key, 'tmp_key')
+    loaded_data = load_data(key)
+    headers = loaded_data[key].headers
+    return render_template('choose_column_form.html', Columns = headers)
 
+#Similarity score
+@app.route('/do_things/sim_results', methods=['POST'])
+def similarity_score_page():
 
+    key = load_obj('tmp_key')
+    header = request.form['column_choice']
+    SMILES = request.form['Smiles']
+    dataset = load_data(key)
+
+    mol_reference = {"SMILES" : SMILES}
+    dataset[key].dataframe = run_similarity(dataset[key].dataframe,header,**mol_reference)
+
+    return dataset[key].dataframe.to_html()
+    #print(dataframes[ds_key].headers)
 
 
 #@app.route('/', methods=['POST'])

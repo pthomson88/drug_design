@@ -6,7 +6,6 @@ from .save_load import load_obj
 #    dataset_key = StringField('Dataset Key')
 #    loaded_data = TextAreaField('Dataset contents')
 
-
 def load_data(dataset_name):
 
     url_dict = load_obj('url_dict')
@@ -29,4 +28,4 @@ def load_data(dataset_name):
         print("")
     print("")
 
-    return files[dataset_name].dataframe
+    return files
