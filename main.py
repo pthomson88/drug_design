@@ -1,25 +1,56 @@
 from drug_design.load_data import load_data
 from drug_design.similarity import run_similarity
 from drug_design.gsheet_store import gsheet_store
+from drug_design.datasets.DataSets import DataSet
+from drug_design.save_load import load_obj
 import pandas as pd
 import drug_design
-from flask import Flask, jsonify
+
+from flask import Flask, jsonify, request, render_template
+from wtforms import Form, BooleanField, StringField, validators
 
 app = Flask(__name__)
 
-#The main function to take you through option 
+#The main function to take you through option
 @app.route("/")
 def main():
     msg = "Welcome to the main page"
-    return msg
+    a = "You can hit Ctrl-C at any time to exit the program \n "
+    b = "Before we get started you're going to need to load some data."
+    return render_template('welcome_page.html', var1 = msg, var2 = a, var3 = b)
 
-#A Page for loading data
-@app.route("/example_load_data")
-def example_load_data():
-    msg = "Load some data"
-    data = [1,2,3]
-    return jsonify(msg , data)
+@app.route('/example_load_data/')
+def example_load_data_form():
+    return render_template('my-form.html', variable = '12345', variable2 = 'next_variable')
 
+#A Page for loading data example
+@app.route('/example_load_data/', methods=['POST'])
+def example_load_data_post():
+    text = request.form['text']
+    text2 = request.form['text2']
+    processed_text = text.upper() + text2.upper()
+    return processed_text
+
+#Load data
+@app.route('/load_data/')
+def load_data_form():
+    url_dict = load_obj('url_dict')
+    return render_template('load_data_form.html', Datafiles = url_dict)
+
+@app.route('/load_data/', methods=['POST'])
+def load_data_post():
+    key = request.form['dataset choice']
+    loaded_data = load_data(key).to_html()
+    return loaded_data
+
+
+
+
+#@app.route('/', methods=['POST'])
+#def my_form_post():
+#    text = request.form['text']
+#    processed_text = text.upper()
+#    return processed_text
 
 
 def main_2():
@@ -132,4 +163,4 @@ def main_2():
         #textinput = TextInput(text="Hello World")
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
