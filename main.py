@@ -3,6 +3,7 @@ from drug_design.similarity import run_similarity
 from drug_design.gsheet_store import gsheet_store
 from drug_design.datasets.DataSets import DataSet
 from drug_design.save_load import load_obj, save_obj
+from drug_design.key_increment import key_increment, get_shifted_key
 import pandas as pd
 import drug_design
 
@@ -41,25 +42,65 @@ def load_data_form():
 def do_things():
     key = request.form['dataset_choice']
     save_obj(key, 'tmp_key')
+    #We need to load the data to show the headers
     loaded_data = load_data(key)
     headers = loaded_data[key].headers
+    #The pipeline is an object that can be save that will ultimately determine the operation
+    #At first it only includes the key but we will build it based on user instruction
+    pipeline = {"source_key" : key }
+    save_obj(pipeline, 'tmp_pipeline')
     return render_template('choose_column_form.html', Columns = headers)
 
 #Similarity score
-@app.route('/do_things/sim_results', methods=['POST'])
+@app.route('/do_things/sim_smiles/', methods=['POST'])
 def similarity_score_page():
 
-    key = load_obj('tmp_key')
     header = request.form['column_choice']
-    SMILES = request.form['Smiles']
-    dataset = load_data(key)
+    pipeline = load_obj('tmp_pipeline')
+    sim_key = key_increment("similarity_score",**pipeline)
 
+    #The pipeline is updated with the sim_key kept unique by an inreasing integer
+    pipeline[sim_key] = header
+    save_obj(pipeline, 'tmp_pipeline')
+
+    if request.form["what_smiles"] == "single_smiles":
+        return render_template('text_entry.html')
+
+    elif request.form["what_smiles"] == "dataframe_smiles":
+        url_dict = load_obj('url_dict')
+        return render_template('load_data_form.html', Datafile = url_dict)
+
+
+@app.route('/do_things/sim_smiles/single/', methods=['POST'])
+def similarity_score_page_single():
+
+    SMILES = request.form["Smiles"]
     mol_reference = {"SMILES" : SMILES}
-    dataset[key].dataframe = run_similarity(dataset[key].dataframe,header,**mol_reference)
 
-    return dataset[key].dataframe.to_html()
+    pipeline = load_obj('tmp_pipeline')
+    new_entry = key_increment("single_smiles",**pipeline)
+
+    pipeline[new_entry] = mol_reference
+    save_obj(pipeline, 'tmp_pipeline')
+
+    return render_template("run_pipeline.html", Pipeline = pipeline)
+
+@app.route('/do_things/results', methods = ['POST'])
+def show_results():
+    pipeline = load_obj('tmp_pipeline')
+    ds_key = pipeline["source_key"]
+    dataset = load_data(ds_key)
+
+    for key in pipeline:
+        if "similarity_score" in key:
+            header = pipeline[key]
+            next_key = get_shifted_key(pipeline,key,1)
+            mol_reference = pipeline[next_key]
+            dataset[ds_key].dataframe = run_similarity(dataset[ds_key].dataframe,header,**mol_reference)
+    #Now there is an option to be redirected to choices to add to the pipeline
+
+    return dataset[ds_key].dataframe.to_html()
     #print(dataframes[ds_key].headers)
-
 
 #@app.route('/', methods=['POST'])
 #def my_form_post():

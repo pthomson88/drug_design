@@ -13,7 +13,10 @@ Please type your choice of column exactly and the SMILES you'd like to use :
 <form action = "{{ url_for('similarity_score_page')}}" name = "dataset list" method = "POST">
   <p>Which column?</p>
   <input name="column_choice">
-  <p>What SMILES?</p>
-  <input name="Smiles">
-  <input type="submit">
+  <p>What is the source of your SMILES?</p><br>
+  <input type="radio" id="Smiles_1" name="what_smiles" value="single_smiles">
+  <label for="single_smiles">A single SMILES string</label><br>
+  <input type="radio" id="Smiles_2" name="what_smiles" value="dataframe_smiles">
+  <label for="dataframe_smiles">A dataframe contains the SMILES strings I want to use</label>
+  <div><input type="submit"></div>
 </form>
