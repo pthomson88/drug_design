@@ -1,3 +1,5 @@
+<p><a href="{{ url_for('main') }}">Return to main page</a></p>
+
 <h2>
 The available dataset keys are :
 </h2>
@@ -10,7 +12,9 @@ The available dataset keys are :
 Please type your choice exactly :
 </h2>
 
-<form action = "{{ url_for('do_things')}}" name = "dataset list" method = "POST">
+<form name = "dataset list" method = "POST">
   <input name="dataset_choice">
+  <input type = "checkbox" name="clear_pipe" value = "clear">
+  <label for="clear_pipe"> Clear out pipeline</label><br>
   <input type="submit">
 </form>

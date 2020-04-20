@@ -1,3 +1,5 @@
+<p><a href="{{ url_for('main') }}">Return to main page</a></p>
+
 <h2>
 The available column headers are :
 </h2>
@@ -7,7 +9,7 @@ The available column headers are :
 {%endfor%}
 
 <h2>
-Please type your choice of column exactly and the SMILES you'd like to use :
+Please type your choice of column exactly and select the source of SMILES you'd like to use :
 </h2>
 
 <form action = "{{ url_for('similarity_score_page')}}" name = "dataset list" method = "POST">

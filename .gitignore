@@ -1,6 +1,8 @@
 env/
 
 /obj/tmp_key.pkl
+/obj/tmp_pipeline.pkl
+
 
 *.pyc
 __pycache__/

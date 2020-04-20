@@ -9,4 +9,6 @@ def load_obj(name ):
         with open('./obj/' + name + '.pkl', 'rb') as f:
             return pickle.load(f)
     except FileNotFoundError:
+        error_msg = "Error: I couldn't find a file with that name"
         print("Error: I couldn't find a file with that name")
+        return error_msg
