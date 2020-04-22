@@ -2,6 +2,8 @@ env/
 
 /obj/tmp_key.pkl
 /obj/tmp_pipeline.pkl
+/obj/max_temp.pkl
+/obj/n_temp.pkl
 
 
 *.pyc
