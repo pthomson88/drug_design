@@ -90,6 +90,7 @@ quit()
 ```
 ### Running web app locally
 Check you're in the top level drug_design directory:
+```
 .
 |
 -- drug_design * <-- You should be here
@@ -105,6 +106,7 @@ Check you're in the top level drug_design directory:
           main_term.py
           main.py
           README.md
+```
 
 Now simply run
 ```
