@@ -4,7 +4,7 @@ This is a project to attempt the following challenge: https://covid.postera.ai/c
 
 There is a trello board for this project here: https://trello.com/b/wHk8KWTo/drugdesign-project
 
-## Getting Started
+## Getting Set up
 Get setup on Github and git:
 * This is a pretty good walkthrough - https://kbroman.org/github_tutorial/pages/first_time.html
 
@@ -88,8 +88,44 @@ To exit the shell type
 ```
 quit()
 ```
+### Running web app locally
+Check you're in the top level drug_design directory:
+.
+|
+-- drug_design * <-- You should be here
+          |
+          -- drug_design   <-- you should see these directories and files or similar
+          -- static
+          -- templates
+          -- tests
+          __init__.py
+          .gitignore
+          app.py
+          drug_design.yml
+          main_term.py
+          main.py
+          README.md
 
-### Prerequisites
+Now simply run
+```
+python main.py
+```
+You will see the following:
+```
+* Serving Flask app "main" (lazy loading)
+* Environment: production
+  WARNING: This is a development server. Do not use it in a production deployment.
+  Use a production WSGI server instead.
+* Debug mode: on
+* Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+* Restarting with stat
+* Debugger is active!
+* Debugger PIN: 193-019-012
+```
+
+Navigate to http://127.0.0.1:500/index to start the web app.
+
+### Useful functions
 
 Useful functions and modules:
 * ```main_term.py``` - main terminal application (main.py is set up for the web app). run this to access the full functionality via the terminal
