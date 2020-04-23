@@ -1,0 +1,16 @@
+<h2>
+The available dataset keys are :
+</h2>
+
+{%for key in Datafile %}
+  <p>{{ key }}</p>
+{%endfor%}
+
+<h2>
+Please type your choice exactly :
+</h2>
+
+<form action = "{{ url_for('similarity_score_page_dataframe')}}" name = "dataset list" method = "POST">
+  <input name="dataset_choice">
+  <input type="submit">
+</form>

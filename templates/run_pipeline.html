@@ -1,0 +1,11 @@
+<p><a href="{{ url_for('main') }}">Return to main page</a></p>
+
+<p>Your pipeline</p>
+{%for key in Pipeline %}
+  <p>{{ key }} : {{Pipeline[key]}}</p>
+{%endfor%}
+
+<form action = "{{ url_for('generate_results_2')}}" method = "POST">
+  <p> To run hit submit </p>
+  <input type = "submit">
+</form>

@@ -18,20 +18,21 @@ class DataSet(object):
             #print("Error: I can't seem to load that file - please check you are requesting a Google Sheet format.")
             raise RuntimeError("This might not be a google sheet...")
         #the dataframe is read in chunks of 100 rows at a time and the headers are read
-        self.chunks = pd.read_csv(csv_file, error_bad_lines=False, chunksize = 100)
+        chunks = pd.read_csv(csv_file, error_bad_lines=False, chunksize = 100)
 
+        self.chunks = [chunk for chunk in chunks]
 
-
-        dfList = []
-        for df in self.chunks:
-            dfList.append(df)
-
-            self.dataframe = pd.concat(dfList,sort=False)
+        self.dataframe = self.stitch_chunks()
 
         self.headers = [c for c in self.dataframe]
 
     def how_many_chunks(self):
         return len(self.chunks)
+
+    def stitch_chunks(self):
+        dfList = [ df for df in self.chunks ]
+        self.dataframe = pd.concat(dfList,sort=False)
+        return self.dataframe
 
 
 #A dictionary pointing to google drive datasets - csv only

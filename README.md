@@ -4,7 +4,7 @@ This is a project to attempt the following challenge: https://covid.postera.ai/c
 
 There is a trello board for this project here: https://trello.com/b/wHk8KWTo/drugdesign-project
 
-## Getting Started
+## Getting Set up
 Get setup on Github and git:
 * This is a pretty good walkthrough - https://kbroman.org/github_tutorial/pages/first_time.html
 
@@ -38,38 +38,37 @@ cd drug_design
 ```
    * Now to load the environment:
 ```
-conda env create -f drug_design.yml
+conda env create --prefix ./env -f drug_design.yml
 ```
 * Finally you'll want to get going so activate your new conda environment:
 ```
-conda activate drug_design
+conda activate ./env
 
 ```
 
-To test it's all working try and load some test data:
+To test it's all working try and load some test data using the python shell:
 
 ```
-python load_data.py
+python
+
+from drug_design.load_data import *
+
+term_load_data()
 ```
 
-You should see:
+You should see an output like the following in your terminal:
 ```
-The available dataset keys are :
+1. test_download
+2. chembl26_ph3_ph4
+3. chembl26_similar_protein_mols
+4. not_a_csv
+5. test_key
 
-test_download
-chembl26_ph3_ph4
-
-Which dataset would you like to load :>
+Which dataset would you like to load. If you'd like to skip this step just press enter :>
 ```
-Type ```test_download``` exactly
+Type ```1``` exactly
 
-You will be asked if you want to load another dataset:
-
-```
-Would you like to load another dataset? enter Y for yes or N for no :>
-```
-
-Type ```n``` the output should be as follows:
+The output should be as follows:
 
 ```
 test_download
@@ -81,16 +80,58 @@ test_download
 3  5  e
 *******************
 
-```
-Remember load_data - you'll need to run this function whenever you want to start:
 
-### Prerequisites
+{'test_download': <drug_design.datasets.DataSets.DataSet object at 0x10c717c40>}
+```
+
+To exit the shell type
+```
+quit()
+```
+### Running web app locally
+Check you're in the top level drug_design directory:
+.
+|
+-- drug_design * <-- You should be here
+          |
+          -- drug_design   <-- you should see these directories and files or similar
+          -- static
+          -- templates
+          -- tests
+          __init__.py
+          .gitignore
+          app.py
+          drug_design.yml
+          main_term.py
+          main.py
+          README.md
+
+Now simply run
+```
+python main.py
+```
+You will see the following:
+```
+* Serving Flask app "main" (lazy loading)
+* Environment: production
+  WARNING: This is a development server. Do not use it in a production deployment.
+  Use a production WSGI server instead.
+* Debug mode: on
+* Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+* Restarting with stat
+* Debugger is active!
+* Debugger PIN: 193-019-012
+```
+
+Navigate to http://127.0.0.1:500/index to start the web app.
+
+### Useful functions
 
 Useful functions and modules:
-
+* ```main_term.py``` - main terminal application (main.py is set up for the web app). run this to access the full functionality via the terminal
 * ```pytest``` tests are stored in test_.py . Running them with the ```pytest``` command is a great way to check that everything is set up correctly and working - it's also useful if you've made changes and want to make sure the code still works
-* ```load_data.py``` - we've already explored - loads all the dataframes you need into a dictionary object called df
-* ```similarity.py``` - takes in 2 strings and tells you how similar one is to another
+* ```load_data.py``` - we've already explored - this module loads all the datasets you need as a DataSet object based on a dataframe, try out ```term_load_data()``` from the python shell
+* ```similarity.py``` - includes functions for edit distance between two string, detween 1 string and every entry in a dataframe column and between every entry in one column with every entry in another - beware big calculations can be slow.
 
 ### Prerequisites
 
