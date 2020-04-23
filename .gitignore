@@ -8,6 +8,9 @@ env/
 
 *.pyc
 __pycache__/
+drug_design/__pycache__/
+drug_design/datasets/__pycache__/
+obj/__pycache__/
 
 instance/
 
