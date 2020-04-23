@@ -58,8 +58,7 @@ def run_similarity(dataframe,column_key,**kwargs):
 def lev_aggregator(seqA, colB, col_header):
     #remember that colB is a dataset object - let's add a results column to each chunk
 
-    for df in colB.chunks:
-            df['result'] := df[col_header].apply(levenshtein, args = (seqA,))
+    result = pd.Series([ df[col_header].apply(levenshtein, args = (seqA,)) for df in colB.chunks ])
     #stitch the chunks back together and pull out the best score from the whole dataframe
     colB_result = colB.stitch_chunks()
     idx = colB.dataframe['result'].idxmin()

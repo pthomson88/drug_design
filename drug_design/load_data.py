@@ -1,10 +1,17 @@
 #We need to import the DataSet class and load the dictionary of urls
 from .datasets.DataSets import DataSet
 from .save_load import load_obj
+from .term_num_opts import *
 
-#class LoadDataForm(Form):
-#    dataset_key = StringField('Dataset Key')
-#    loaded_data = TextAreaField('Dataset contents')
+def term_load_data():
+    url_dict = load_obj('url_dict')
+    options = [key for key in url_dict]
+    selection = selector(options,"Which dataset would you like to load. If you'd like to skip this step just press enter")
+    if selection == False:
+        print("No new data loaded")
+        return False
+    files = load_data(selection)
+    return files
 
 def load_data(dataset_name):
 

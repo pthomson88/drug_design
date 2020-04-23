@@ -53,30 +53,22 @@ python
 
 from drug_design.load_data import *
 
-load_data()
+term_load_data()
 ```
 
 You should see an output like the following in your terminal:
 ```
-The available dataset keys are :
-
-test_download
-chembl26_ph3_ph4
-chembl26_similar_protein_mols
-not_a_csv
-test_key
+1. test_download
+2. chembl26_ph3_ph4
+3. chembl26_similar_protein_mols
+4. not_a_csv
+5. test_key
 
 Which dataset would you like to load. If you'd like to skip this step just press enter :>
 ```
-Type ```test_download``` exactly
+Type ```1``` exactly
 
-You will be asked if you want to load another dataset:
-
-```
-Would you like to load another dataset? enter Y for yes or N for no :>
-```
-
-Type ```n``` the output should be as follows:
+The output should be as follows:
 
 ```
 test_download
@@ -100,10 +92,10 @@ quit()
 ### Prerequisites
 
 Useful functions and modules:
-
+* ```main_term.py``` - main terminal application (main.py is set up for the web app). run this to access the full functionality via the terminal
 * ```pytest``` tests are stored in test_.py . Running them with the ```pytest``` command is a great way to check that everything is set up correctly and working - it's also useful if you've made changes and want to make sure the code still works
-* ```load_data.py``` - we've already explored - loads all the dataframes you need into a dictionary object called df
-* ```similarity.py``` - takes in 2 strings and tells you how similar one is to another
+* ```load_data.py``` - we've already explored - this module loads all the datasets you need as a DataSet object based on a dataframe, try out ```term_load_data()``` from the python shell
+* ```similarity.py``` - includes functions for edit distance between two string, detween 1 string and every entry in a dataframe column and between every entry in one column with every entry in another - beware big calculations can be slow.
 
 ### Prerequisites
 
