@@ -5,7 +5,7 @@ from .term_num_opts import *
 
 def term_load_data():
     url_dict = load_obj('url_dict')
-        options = [key for key in url_dict]
+    options = [key for key in url_dict]
     selection = selector(options,"Which dataset would you like to load. If you'd like to skip this step just press enter")
     if selection == False:
         print("No new data loaded")

@@ -30,8 +30,11 @@ def run_similarity(dataframe,column_key,**kwargs):
 
                         #We need to apply the lev_aggregator function this time and unpack the result into new columns
                         dataframe['new'] = dataframe[column_key].apply(lev_aggregator, args = (df2_dataset,ref_column,))
-                        dataframe['sim_match_' + str(key) +"_"+ str(ref_column)], dataframe['sim_score_' + str(key) +"_"+ str(ref_column)] = dataframe.new.str
-                        dataframe.drop(['new'], axis=1)
+                        try:
+                            dataframe['sim_match_' + str(key) +"_"+ str(ref_column)], dataframe['sim_score_' + str(key) +"_"+ str(ref_column)] = dataframe.new.str
+                        except FutureWarning:
+                            print("Ignoring FutureWarning...")
+                        dataframe = dataframe.drop(columns=['new'])
                         print(".")
                         max = int(load_obj('max_temp'))
                         n = load_obj('n_temp')
@@ -52,10 +55,12 @@ def run_similarity(dataframe,column_key,**kwargs):
 #Scores every SMILES in list against one and returns only the max score
 def lev_aggregator(seqA, colB, col_header):
     #remember that colB is a dataset object - let's add a results column to each chunk
+    df_col = colB.dataframe[col_header]
 
-    result = pd.Series([ df[col_header].apply(levenshtein, args = (seqA,)) for df in colB.chunks ])
+    result = [ levenshtein(seqA, x) for x in df_col ]
+
+    colB.dataframe['result'] = pd.Series(result)
     #stitch the chunks back together and pull out the best score from the whole dataframe
-    colB_result = colB.stitch_chunks()
     idx = colB.dataframe['result'].idxmin()
     min = colB.dataframe['result'].min()
     return colB.dataframe[col_header][idx] , min
