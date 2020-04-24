@@ -11,13 +11,10 @@ def run_similarity(dataframe,column_key,**kwargs):
     if isinstance(dataframe, pd.DataFrame):
         #You need to put in a valid argument for a column header for teh source dataframe
         if column_key in dataframe.columns:
-
         #There should only be one key in kwargs - the name of the second argument passed
             for key in kwargs:
-
                 #If the second argument isn't a list, dictionary or dataframe:
                 if isinstance(kwargs[key], (str, int)):
-
                     SMILES = str(kwargs[key])
                     dataframe['sim_score_' + str(SMILES)] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
                     return dataframe
@@ -47,11 +44,8 @@ def run_similarity(dataframe,column_key,**kwargs):
 
                     else:
                         print("Error: I'm sorry I couldn't find that column in the reference dataframe you submitted")
-
         else:
             print("Error: I'm sorry I couldn't find that column in the source dataframe you submitted")
-
-
     else:
         print("Error: It looks like your dataframe isn't a pandas DataFrame")
 
@@ -66,9 +60,6 @@ def lev_aggregator(seqA, colB, col_header):
     min = colB.dataframe['result'].min()
     return colB.dataframe[col_header][idx] , min
 
-
-
-#the minimum number of insertions, deletions and substitutions required to turn 1 string into another
 #the minimum number of insertions, deletions and substitutions required to turn 1 string into another
 def levenshtein(seqA, seqB):
     seq1 = str(seqA)
