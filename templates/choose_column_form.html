@@ -19,6 +19,8 @@ Please type your choice of column exactly and select the source of SMILES you'd 
   <input type="radio" id="Smiles_1" name="what_smiles" value="single_smiles">
   <label for="single_smiles">A single SMILES string</label><br>
   <input type="radio" id="Smiles_2" name="what_smiles" value="dataframe_smiles">
-  <label for="dataframe_smiles">A dataframe contains the SMILES strings I want to use</label>
+  <label for="dataframe_smiles">A dataframe contains the SMILES strings I want to use</label><br>
+  <input type = "checkbox" name="norm_on" value = "norm_true">
+  <label for="norm_on"> Use normalised scores (This balances the score for the length of Smiles - exactly matching smiles score 100, completely dissimilar strings score 0)</label><br>
   <div><input type="submit"></div>
 </form>

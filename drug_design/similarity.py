@@ -18,7 +18,10 @@ def run_similarity(dataframe,column_key,**kwargs):
                 if isinstance(kwargs[key][0], (str, int)):
                     SMILES = str(kwargs[key][0])
                     norm = kwargs[key][1]
-                    dataframe['sim_score_' + SMILES] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
+                    if norm:
+                        dataframe['sim_score_' + SMILES] = dataframe[column_key].apply(levenshtein_norm, args = (SMILES,))
+                    else:
+                        dataframe['sim_score_' + SMILES] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
                     return dataframe
                 #The dataframe will be as its dataset object so we need to look at the dataframe parameter
                 elif isinstance(kwargs[key][0].dataframe, pd.DataFrame):
@@ -61,19 +64,22 @@ def lev_aggregator(seqA, colB, col_header,norm):
     df_col = colB.dataframe[col_header]
     max_cpu = cpu_count()
     #result = [ levenshtein(seqA, x) for x in df_col ]
-    if not norm:
-        with Pool(max_cpu) as p:
-            result = p.starmap(levenshtein,[(seqA, x) for x in df_col],100)
-            #result = [ levenshtein(seqA, x) for x in df_col ]
     if norm:
         with Pool(max_cpu) as p:
             result = p.starmap(levenshtein_norm,[(seqA, x) for x in df_col],100)
             #result = [ levenshtein(seqA, x) for x in df_col ]
-
+    else:
+        with Pool(max_cpu) as p:
+            result = p.starmap(levenshtein_norm,[(seqA, x) for x in df_col],100)
+            #result = [ levenshtein(seqA, x) for x in df_col ]
     colB.dataframe['result'] = pd.Series(result)
     #stitch the chunks back together and pull out the best score from the whole dataframe
-    idx = colB.dataframe['result'].idxmin()
-    min = colB.dataframe['result'].min()
+    if norm:
+        idx = colB.dataframe['result'].idxmax()
+        min = colB.dataframe['result'].max()
+    else:
+        idx = colB.dataframe['result'].idxmin()
+        min = colB.dataframe['result'].min()
     return colB.dataframe[col_header][idx] , min
 
 #the minimum number of insertions, deletions and substitutions required to turn 1 string into another

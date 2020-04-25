@@ -74,11 +74,16 @@ def sim_score_start():
 def similarity_score_page():
 
     header = request.form['column_choice']
+    norm_on = request.form['norm_on']
+    if norm_on == "norm_true":
+        norm = True
     pipeline = load_obj('tmp_pipeline')
     sim_key = key_increment("similarity_score",**pipeline)
+    norm_key = key_increment("normalise_scores",**pipeline)
 
     #The pipeline is updated with the sim_key kept unique by an inreasing integer
     pipeline[sim_key] = header
+    pipeline[norm_key] = norm
     save_obj(pipeline, 'tmp_pipeline')
 
     if request.form["what_smiles"] == "single_smiles":
@@ -136,9 +141,9 @@ def generate_results_2():
     for key in pipeline:
         if "similarity_score" in key:
             header = pipeline[key]
-            next_key = get_shifted_key(pipeline,key,1)
+            norm = pipeline[get_shifted_key(pipeline,key,1)]
+            next_key = get_shifted_key(pipeline,key,2)
             if "single_smiles" in next_key:
-                norm = False
                 mol_reference = {"SMILES" : [pipeline[next_key],norm]}
                 for chunk in dataset[ds_key].chunks:
                     chunk = run_similarity(chunk,header,**mol_reference)
@@ -150,7 +155,6 @@ def generate_results_2():
                 next_next_key = get_shifted_key(pipeline,next_key,1)
                 ref_column = pipeline[next_next_key]
                 #pass in the reference df as its DataSet object
-                norm = True
                 mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column, norm] }
                 n = 0
                 save_obj(n,'n_temp')
