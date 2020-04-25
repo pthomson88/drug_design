@@ -53,7 +53,17 @@ def main_term():
                     SMILES = input("Paste or type the SMILES you'd like to score similarity for :> ")
                     print("")
 
-                    norm = False
+                    #indicates that levenshtein_norm should be used ratehr than levenshtein - see similarity module
+                    print("Would you like to use normalised scores?")
+                    print("This balances the score for the length of Smiles - exactly matching smiles score 100, completely dissimilar strings score 0")
+                    norm_on = input("Type Y to turn normalisation on or N to keep it off :> ")
+
+                    if norm_on.lower() == "y":
+                        norm = True
+                        print("Normalised scoring on")
+                    else:
+                        norm = False
+                        print("Normalised scoring off")
 
                     mol_reference = {"SMILES" : [SMILES, norm]}
 
