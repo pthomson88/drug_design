@@ -53,7 +53,9 @@ def main_term():
                     SMILES = input("Paste or type the SMILES you'd like to score similarity for :> ")
                     print("")
 
-                    mol_reference = {"SMILES" : SMILES}
+                    norm = False
+
+                    mol_reference = {"SMILES" : [SMILES, norm]}
 
                     dataframes[ds_key].dataframe = run_similarity(dataframes[ds_key].dataframe,columns,**mol_reference)
 

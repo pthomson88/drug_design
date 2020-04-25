@@ -3,25 +3,28 @@
 import numpy as np
 import pandas as pd
 from .save_load import *
+from multiprocessing import Pool, cpu_count
 
 #Take a dataframe with SMILES strings and one target SMILES then add a column of the scores
 def run_similarity(dataframe,column_key,**kwargs):
 
 #The first argument must be a dataframe
     if isinstance(dataframe, pd.DataFrame):
-        #You need to put in a valid argument for a column header for teh source dataframe
+        #You need to put in a valid argument for a column header for the source dataframe
         if column_key in dataframe.columns:
         #There should only be one key in kwargs - the name of the second argument passed
             for key in kwargs:
                 #If the second argument isn't a list, dictionary or dataframe:
-                if isinstance(kwargs[key], (str, int)):
-                    SMILES = str(kwargs[key])
-                    dataframe['sim_score_' + str(SMILES)] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
+                if isinstance(kwargs[key][0], (str, int)):
+                    SMILES = str(kwargs[key][0])
+                    norm = kwargs[key][1]
+                    dataframe['sim_score_' + SMILES] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
                     return dataframe
                 #The dataframe will be as its dataset object so we need to look at the dataframe parameter
                 elif isinstance(kwargs[key][0].dataframe, pd.DataFrame):
                     #there should only be a single column passed
                     ref_column = kwargs[key][1]
+                    norm = kwargs[key][2]
                     #Double check we've not screwed up by looking at the headers parameter
                     if ref_column in kwargs[key][0].headers:
                         print("Calculating")
@@ -29,7 +32,7 @@ def run_similarity(dataframe,column_key,**kwargs):
                         df2_dataset = kwargs[key][0]
 
                         #We need to apply the lev_aggregator function this time and unpack the result into new columns
-                        dataframe['new'] = dataframe[column_key].apply(lev_aggregator, args = (df2_dataset,ref_column,))
+                        dataframe['new'] = dataframe[column_key].apply(lev_aggregator, args = (df2_dataset,ref_column,norm,))
                         try:
                             dataframe['sim_match_' + str(key) +"_"+ str(ref_column)], dataframe['sim_score_' + str(key) +"_"+ str(ref_column)] = dataframe.new.str
                         except FutureWarning:
@@ -53,11 +56,19 @@ def run_similarity(dataframe,column_key,**kwargs):
         print("Error: It looks like your dataframe isn't a pandas DataFrame")
 
 #Scores every SMILES in list against one and returns only the max score
-def lev_aggregator(seqA, colB, col_header):
+def lev_aggregator(seqA, colB, col_header,norm):
     #remember that colB is a dataset object - let's add a results column to each chunk
     df_col = colB.dataframe[col_header]
-
-    result = [ levenshtein(seqA, x) for x in df_col ]
+    max_cpu = cpu_count()
+    #result = [ levenshtein(seqA, x) for x in df_col ]
+    if not norm:
+        with Pool(max_cpu) as p:
+            result = p.starmap(levenshtein,[(seqA, x) for x in df_col],100)
+            #result = [ levenshtein(seqA, x) for x in df_col ]
+    if norm:
+        with Pool(max_cpu) as p:
+            result = p.starmap(levenshtein_norm,[(seqA, x) for x in df_col],100)
+            #result = [ levenshtein(seqA, x) for x in df_col ]
 
     colB.dataframe['result'] = pd.Series(result)
     #stitch the chunks back together and pull out the best score from the whole dataframe
@@ -73,9 +84,24 @@ def levenshtein(seqA, seqB):
         return 10000
     else:
         if len(seq1) > len(seq2):
-            #make sure the shorter string is seq1
             seq1, seq2 = seq2, seq1
-            #don't calculate bad strings  - just penalise immediately
+        return levenshtein_calc(seq1,seq2)
+
+#the minimum number of insertions, deletions and substitutions required to turn 1 string into another
+def levenshtein_norm(seqA, seqB):
+    seq1 = str(seqA)
+    seq2 = str(seqB)
+    if seq1 == "" or seq1.lower() == "nan" or seq2 == "" or seq2.lower() == "nan":
+        return 10000
+    else:
+        if len(seq1) > len(seq2):
+            seq1, seq2 = seq2, seq1
+        max = len(seq2)
+        raw_score = levenshtein_calc(seq1,seq2)
+        result = 100 * (max - raw_score) / max
+        return result
+
+def levenshtein_calc(seq1,seq2):
         size_x = len(seq1)
         size_y = len(seq2)
         v0 = [0]+[ i for i in range(1,size_x+1)]

@@ -138,7 +138,8 @@ def generate_results_2():
             header = pipeline[key]
             next_key = get_shifted_key(pipeline,key,1)
             if "single_smiles" in next_key:
-                mol_reference = {"SMILES" : pipeline[next_key]}
+                norm = False
+                mol_reference = {"SMILES" : [pipeline[next_key],norm]}
                 for chunk in dataset[ds_key].chunks:
                     chunk = run_similarity(chunk,header,**mol_reference)
                 dataset[ds_key].stitch_chunks()
@@ -149,7 +150,8 @@ def generate_results_2():
                 next_next_key = get_shifted_key(pipeline,next_key,1)
                 ref_column = pipeline[next_next_key]
                 #pass in the reference df as its DataSet object
-                mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column] }
+                norm = True
+                mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column, norm] }
                 n = 0
                 save_obj(n,'n_temp')
                 max = len(dataset[ds_key].dataframe.index)
