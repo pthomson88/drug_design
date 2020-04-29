@@ -74,11 +74,14 @@ def create_app():
     #Similarity score
     @app.route('/sim-score/reference_smiles', methods=['GET','POST'])
     def similarity_score_page():
-
+        norm = False
         header = request.form['column_choice']
-        norm_on = request.form['norm_on']
-        if norm_on == "norm_true":
-            norm = True
+        try:
+            norm_on = request.form['norm_on']
+            if norm_on == "norm_true":
+                norm = True
+        except:
+            print('normalisation off')
         pipeline = load_obj('tmp_pipeline')
         sim_key = key_increment("similarity_score",**pipeline)
         norm_key = key_increment("normalise_scores",**pipeline)

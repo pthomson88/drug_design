@@ -46,12 +46,12 @@ def test_norm_single_smiles(client):
     #AND I am on the view pipline page
     #WHEN I press submit to run the pipeline
     #THEN The similarity scores in my results are normalised
-    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": "True", "single_smiles": "dog"}
+    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": True, "single_smiles": "dog" }
     save_obj(pipeline, 'tmp_pipeline')
     print("Pipeline contents:")
     print(pipeline)
     result = client.post(url_for('generate_results_2'))
-    assert  result.status_code == 200
+    assert result.status_code == 200
 
     sim_result = result.data
     print(sim_result)
@@ -66,12 +66,12 @@ def test_single_smiles(client):
     #AND I am on the view pipline page
     #WHEN I press submit to run the pipeline
     #THEN The similarity scores in my results are not normalised
-    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": "False", "single_smiles": "dog"}
+    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": False, "single_smiles": "dog"}
     save_obj(pipeline, 'tmp_pipeline')
     print("Pipeline contents:")
     print(pipeline)
     result = client.post(url_for('generate_results_2'))
-    assert  result.status_code == 200
+    assert result.status_code == 200
 
     sim_result = result.data
     print(sim_result)
@@ -88,12 +88,12 @@ def test_norm_df_smiles(client):
     #WHEN I press submit to run the pipeline
     #THEN The similarity scores in my results are normalised
     #AND the correct best score is returned based on the normalised scores
-    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": "True", "dataframe_smiles_ref": "test_download_2", "dataframe_smiles_col": "animal"}
+    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": True, "dataframe_smiles_ref": "test_download_2", "dataframe_smiles_col": "animal"}
     save_obj(pipeline, 'tmp_pipeline')
     print("Pipeline contents:")
     print(pipeline)
     result = client.post(url_for('generate_results_2'))
-    assert  result.status_code == 200
+    assert result.status_code == 200
 
     sim_result = result.data
     print(sim_result)
@@ -110,12 +110,12 @@ def test_df_smiles(client):
     #WHEN I press submit to run the pipeline
     #THEN The similarity scores in my results are not normalised
     #AND the correct best score is returned based on the un-normalised scores
-    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": "False", "dataframe_smiles_ref": "test_download_2", "dataframe_smiles_col": "animal"}
+    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": False, "dataframe_smiles_ref": "test_download_2", "dataframe_smiles_col": "animal"}
     save_obj(pipeline, 'tmp_pipeline')
     print("Pipeline contents:")
     print(pipeline)
     result = client.post(url_for('generate_results_2'))
-    assert  result.status_code == 200
+    assert result.status_code == 200
 
     sim_result = result.data
     print(sim_result)

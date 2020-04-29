@@ -18,7 +18,7 @@ def run_similarity(dataframe,column_key,**kwargs):
                 if isinstance(kwargs[key][0], (str, int)):
                     SMILES = str(kwargs[key][0])
                     norm = kwargs[key][1]
-                    if norm:
+                    if norm == True:
                         dataframe['sim_score_' + SMILES] = dataframe[column_key].apply(levenshtein_norm, args = (SMILES,))
                     else:
                         dataframe['sim_score_' + SMILES] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
@@ -64,17 +64,17 @@ def lev_aggregator(seqA, colB, col_header,norm):
     df_col = colB.dataframe[col_header]
     max_cpu = cpu_count()
     #result = [ levenshtein(seqA, x) for x in df_col ]
-    if norm:
+    if norm == True:
         with Pool(max_cpu) as p:
             result = p.starmap(levenshtein_norm,[(seqA, x) for x in df_col],100)
             #result = [ levenshtein(seqA, x) for x in df_col ]
     else:
         with Pool(max_cpu) as p:
-            result = p.starmap(levenshtein_norm,[(seqA, x) for x in df_col],100)
+            result = p.starmap(levenshtein,[(seqA, x) for x in df_col],100)
             #result = [ levenshtein(seqA, x) for x in df_col ]
     colB.dataframe['result'] = pd.Series(result)
     #stitch the chunks back together and pull out the best score from the whole dataframe
-    if norm:
+    if norm == True:
         idx = colB.dataframe['result'].idxmax()
         min = colB.dataframe['result'].max()
     else:
