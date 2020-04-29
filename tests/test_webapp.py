@@ -61,6 +61,26 @@ def test_norm_single_smiles(client):
     pipeline = {"source_key" : ""}
     save_obj(pipeline, 'tmp_pipeline')
 
+def test_single_smiles(client):
+    #GIVEN I have a pipeline with normalisation off and single smiles similarity scoring
+    #AND I am on the view pipline page
+    #WHEN I press submit to run the pipeline
+    #THEN The similarity scores in my results are not normalised
+    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": "False", "single_smiles": "dog"}
+    save_obj(pipeline, 'tmp_pipeline')
+    print("Pipeline contents:")
+    print(pipeline)
+    result = client.post(url_for('generate_results_2'))
+    assert  result.status_code == 200
+
+    sim_result = result.data
+    print(sim_result)
+    table = pd.read_html(sim_result)
+    assert table[0]['sim_score_dog'][2] == 2
+
+    pipeline = {"source_key" : ""}
+    save_obj(pipeline, 'tmp_pipeline')
+
 
 def test_norm_df_smiles(client):
     #GIVEN I have a pipeline including normalisation and dataframe smiles similarity scoring
@@ -80,6 +100,28 @@ def test_norm_df_smiles(client):
     table = pd.read_html(sim_result)
     assert table[0]['sim_match_test_download_2_animal'][1] == "cat"
     assert table[0]['sim_score_test_download_2_animal'][1] == 33.333333
+
+    pipeline = {"source_key" : ""}
+    save_obj(pipeline, 'tmp_pipeline')
+
+def test_df_smiles(client):
+    #GIVEN I have a pipeline with normalisation off and dataframe smiles similarity scoring
+    #AND I am on the view pipline page
+    #WHEN I press submit to run the pipeline
+    #THEN The similarity scores in my results are not normalised
+    #AND the correct best score is returned based on the un-normalised scores
+    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": "False", "dataframe_smiles_ref": "test_download_2", "dataframe_smiles_col": "animal"}
+    save_obj(pipeline, 'tmp_pipeline')
+    print("Pipeline contents:")
+    print(pipeline)
+    result = client.post(url_for('generate_results_2'))
+    assert  result.status_code == 200
+
+    sim_result = result.data
+    print(sim_result)
+    table = pd.read_html(sim_result)
+    assert table[0]['sim_match_test_download_2_animal'][1] == "cat"
+    assert table[0]['sim_score_test_download_2_animal'][1] == 2
 
     pipeline = {"source_key" : ""}
     save_obj(pipeline, 'tmp_pipeline')
