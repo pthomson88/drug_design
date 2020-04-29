@@ -1,13 +1,18 @@
+#We're in the test directory so we need to jump back to the root dir to find modules
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir)
+
 from drug_design.load_data import *
 from drug_design.similarity import *
 from drug_design.gsheet_store import *
 from drug_design.save_load import save_obj, load_obj
-from main import *
+from main_term import *
 
 import pandas as pd
 import pytest
 import io
-import sys
 
 #Main module tests
 #If I don't answer numerically to a numbered choice list I should be shown an error and askey to try again
@@ -19,7 +24,7 @@ def test_main_choices(monkeypatch):
     responses = iter(["", 'this is not a number', '5'])
     monkeypatch.setattr('builtins.input', lambda msg: next(responses))
 
-    DrugDesign.main()
+    main_term()
 
     sys.stdout = sys.__stdout__
 
@@ -35,7 +40,7 @@ def test_sim(monkeypatch):
     responses = iter(["test_download", "N", "1", "1", "a", "dog", "5"])
     monkeypatch.setattr('builtins.input', lambda msg: next(responses))
 
-    DrugDesign.main()
+    main_term()
 
     sys.stdout = sys.__stdout__
 
@@ -111,14 +116,25 @@ def test_sim_df_df(monkeypatch):
 
     assert df_source['sim_score_df_reference_col2'].values[0] == 1
 
-#Keys don't match in 2nd DataFrame
+#test levenshtein normalisation happy path
+def test_sim_norm_happy():
+    seq1 = "dog"
+    seq_long = "dogcat"
+    #if normalisation is on the score should be 50 - if not it will be 3
+    assert levenshtein_norm(seq1,seq_long) == 50
 
-#2nd dataframe isn't a dataframe but should be useable - e.g. lists, strings, integers
+#test levenshtein normalisation long and short mismatches
+def test_sim_norm_lengthcheck():
+    seq1 = "dog"
+    seq2 = "dot"
+    seq3 ="ddoogg"
+    seq4 = "ddoott"
+    short = levenshtein_norm(seq1,seq2)
+    long = levenshtein_norm(seq3,seq4)
+    #if normalisation is on the score of both should be 66
+    #if its off the short string comparison will score 1 and the long 2
+    assert short == long
 
-#2nd dataframe isn't a dataframe and isn't useable - e.g. custom class object, image etc.
-
-#load_data tests:
-#Happy path using test test_download
 def test_load_data(monkeypatch):
 
     # monkeypatch the "input" function, so that it returns "test_download".

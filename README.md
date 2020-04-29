@@ -131,9 +131,9 @@ Navigate to http://127.0.0.1:500/index to start the web app.
 
 Useful functions and modules:
 * ```main_term.py``` - main terminal application (main.py is set up for the web app). run this to access the full functionality via the terminal
-* ```pytest``` tests are stored in test_.py . Running them with the ```pytest``` command is a great way to check that everything is set up correctly and working - it's also useful if you've made changes and want to make sure the code still works
+* ```pytest tests``` - tests are stored in ```test_funcs.py```, ```test_testss.py``` and ```test_webapp.py``` . Running them with the ```pytest``` command is a great way to check that everything is set up correctly and working - it's also useful if you've made changes and want to make sure the code still works. 
 * ```load_data.py``` - we've already explored - this module loads all the datasets you need as a DataSet object based on a dataframe, try out ```term_load_data()``` from the python shell
-* ```similarity.py``` - includes functions for edit distance between two string, detween 1 string and every entry in a dataframe column and between every entry in one column with every entry in another - beware big calculations can be slow.
+* ```similarity.py``` - includes functions for edit distance between two string, between 1 string and every entry in a dataframe column and between every entry in one column with every entry in another - beware big calculations can be slow.
 
 ### Prerequisites
 
