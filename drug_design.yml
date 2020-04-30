@@ -1,4 +1,4 @@
-name: /Users/pethomson/projects/drug_design/env
+name: drug_design
 channels:
   - defaults
 dependencies:
@@ -79,5 +79,8 @@ dependencies:
   - zict=2.0.0=py_0
   - zlib=1.2.11=h1de35cc_3
   - zstd=1.3.7=h5bba6e5_0
-prefix: /Users/pethomson/projects/drug_design/env
+  - pip:
+    - lxml==4.5.0
+    - pytest-flask==1.0.0
+prefix: /Users/pethomson/miniconda3/envs/drug_design
 
