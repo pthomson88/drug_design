@@ -8,6 +8,78 @@ There is a trello board for this project here: https://trello.com/b/wHk8KWTo/dru
 Get setup on Github and git:
 * This is a pretty good walkthrough - https://kbroman.org/github_tutorial/pages/first_time.html
 
+* We're using Redis as a cache for web app sessions. This is a database that relies more on RAM than writing to disk and as such can be really fast for this kind of purpose. Structurally it is very similar to a python dictionary.
+  * To get set up (on mac) first navigate to a relevant directory in the terminal e.g.
+```
+cd projects
+```
+  * Next:
+```
+redisurl="http://download.redis.io/redis-stable.tar.gz"
+
+curl -s -o redis-stable.tar.gz $redisur
+
+sudo su root
+```
+  * You'll be asked for your password ``` Password: ``` . Type it in and press enter (note the characters won't show as you type).
+  * Next up:
+```
+mkdir -p /usr/local/lib/
+
+chmod a+w /usr/local/lib/
+
+tar -C /usr/local/lib/ -xzf redis-stable.tar.gz
+
+rm redis-stable.tar.gz
+
+cd /usr/local/lib/redis-stable/
+
+make && make install
+```
+  * Some things should be happening in your terminal now. To check it all worked type:
+```
+redis-cli --version
+```
+  * You should see something like: ```redis-cli 6.0.1 ```
+  * Finally lets configure it:
+```
+sudo su root
+
+mkdir -p /etc/redis/
+
+touch /etc/redis/6379.conf
+
+nano /etc/redis/6379.conf
+```
+  * Copy the following into the resulting text file then save and exit (with Ctrl-X).
+```
+port              6379
+daemonize         yes
+save              60 1
+bind              127.0.0.1
+tcp-keepalive     300
+dbfilename        dump.rdb
+dir               ./
+rdbcompression    yes
+
+```
+  * Now start it up with: ```redis-server /etc/redis/6379.conf```. You'll see the following:
+```
+# oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+# Redis version=6.0.1, bits=64, commit=00000000, modified=0, pid=54026, just started
+# Configuration loaded
+```
+  * Now type:
+```
+redis-cli
+```
+  * Redis is now opened running locally. You'll be prompted for input - type "ping" to test it's working and you should see the response "PONG":
+```
+127.0.0.1:6379> ping
+PONG
+```
+* Congratulations, you've setup Redis to run on localhos.
+
 Next clone the repo and get stuck in:
 * In your terminal window you'll want to navigate to a sensible directory
    * If you have a folder in your home drive called projects that you'd like to keep this in then in a unix environment (mac or linux) use the command:
@@ -138,6 +210,8 @@ Useful functions and modules:
 ### Prerequisites
 
 Instructions above are based on Mac - they might be similar for Linux - Windows will probably be a little different and might require some Googling
+
+
 
 ## Authors
 
