@@ -84,5 +84,3 @@ dependencies:
     - lxml==4.5.0
     - pytest-flask==1.0.0
     - redis==3.5.0
-prefix: /Users/pethomson/miniconda3/envs/drug_design
-
