@@ -7,8 +7,6 @@ from drug_design.key_increment import key_increment, get_shifted_key
 import pandas as pd
 import drug_design
 
-#test message in differnt module
-
 from flask import Flask, jsonify, request, render_template, redirect, url_for, Markup
 from flask_redis import FlaskRedis
 from wtforms import Form, BooleanField, StringField, validators
@@ -17,7 +15,6 @@ def create_app():
     app = Flask(__name__)
     redis_client = FlaskRedis(app)
     app.config['REDIS_URL'] = "redis://:password@localhost:6379/0"
-
 
     #The main function to take you through option
     @app.route("/index/", methods=['GET','POST'])
