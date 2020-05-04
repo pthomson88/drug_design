@@ -3,8 +3,11 @@ from drug_design.similarity import run_similarity
 from drug_design.save_load import *
 from drug_design.term_num_opts import *
 from drug_design.gsheet_store import *
+from drug_design.datastore_connect import datastore_connect
 
 def main_term():
+    #connect to the database - we don't use it yet but we will 
+    ds_client = datastore_connect
 
     quit = False
     #when we start for the first time dataframes should be empty
