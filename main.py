@@ -6,6 +6,7 @@ from drug_design.gsheet_store import gsheet_store
 from drug_design.datasets.DataSets import DataSet
 from drug_design.save_load import load_obj, save_obj, store_time, fetch_times
 from drug_design.key_increment import key_increment, get_shifted_key, sub_key_gen
+from drug_design.DataStorePipeLine import DataStorePipeLine
 import pandas as pd
 import drug_design
 
@@ -20,8 +21,6 @@ datastore_client = datastore.Client()
 
 def create_app():
     app = Flask(__name__)
-    redis_client = FlaskRedis(app)
-    app.config['REDIS_URL'] = "redis://:password@localhost:6379/0"
 
     #The main function to take you through option
     @app.route("/index/", methods=['GET','POST'])
@@ -34,7 +33,7 @@ def create_app():
 
         msg = "Welcome to the main page"
         b = "You already have some data loaded, your options are:"
-        pipeline = load_obj('tmp_pipeline')
+        pipeline = DataStorePipeLine(True, user_id = 'test')
         if isinstance(pipeline,dict):
             return render_template('welcome_options.html', var1 = msg, times = times, var3 = b)
 

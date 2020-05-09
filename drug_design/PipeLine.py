@@ -8,9 +8,9 @@ class PipeLine(object):
     """A class for the pipeline object."""
     #A pipeline consists of a dictionary defining actions, a source_key and a created datetime
     def __init__(self, **kwargs):
-        self.created = srt(datetime.datetime.now())
+        self.created = str(datetime.datetime.now())
         self.dictionary = {'source_key' : '' }
-        update_property(self, **kwargs)
+        self.update_property(**kwargs)
 
     #a pipeline can be updated with new kwargs
     def update_property(self,**kwargs):
@@ -35,9 +35,9 @@ class PipeLine(object):
             if key[16] == "similarity_score":
                 tmp_key = key
                 sim_pipe = {tmp_key : pipeline[tmp_key]}
-                    for key in pipeline:
-                        if tmp_key in key:
-                            sim_pipe[key] = pipeline[key]
+                for key in pipeline:
+                    if tmp_key in key:
+                        sim_pipe[key] = pipeline[key]
 
 
                 header = sim_pipe[tmp_key]
@@ -83,77 +83,15 @@ class TermPipeLine(PipeLine):
         save_changes()
         save_obj(self.created, 'last_created_at')
 
-    def update_property(self,**kwargs):
+    def update_property_terminal(self,**kwargs):
         super().update_property(**kwargs)
         save_changes()
 
-    def delete_property(self, **kwargs):
+    def delete_property_terminal(self, **kwargs):
         super().delete_property(**kwargs)
         save_changes()
 
-    def save_changes(self):
+    def save_changes_terminal(self):
         self.source_key = self.dictionary['source_key']
         save_obj(self.dictionary,'tmp_pipeline')
         save_obj(self.source_key, 'tmp_key')
-
-    def run_pipeline(self):
-        super().run_pipeline()
-
-#Class definition of a datastore pipeline
-class DataStorePipeLine(PipeLine):
-
-    #This will try to connect to the datastore using whatever credentials it finds
-    from google.cloud import datastore
-    datastore_client = datastore.Client()
-
-    def __init__(self,load, **kwargs):
-
-        if load == True:
-            self.user_id = kwargs['user_id']
-        else:
-            #obviously this is a placeholder and needs user id funcitonality piped in
-            self.user_id = 'test'
-            #This will establish created, source_key and dictionary properties
-            super(DataStorePipeLine, self).__init__(**kwargs)
-
-        #for a first pass we'll have 1 pipeline per user (hence id  = user_id)
-        self.id = self.user_id
-        name = self.id
-        kind = 'Pipeline'
-        pipeline_key = datastore_client.key(kind,name)
-        self.pipeline_entity = datastore.Entity(key=pipeline_key)
-
-        if load != True:
-            #Add the create time and user_id to the datastore entity at the start
-            self.pipeline_entity['created'] = self.created
-            self.pipeline_entity['user_id'] = self.user_id
-
-        #update the pipeline with kwargs  - no need to update the dictionary as this was done already
-        update_property2(**kwargs)
-
-    def update_property(self,**kwargs):
-    #use this when updating properties separately from initialising a Pipeline
-        super().update_property(**kwargs)
-        update_property2(**kwargs)
-
-    def update_property2(self, **kwargs):
-    #this is for use as part of initialising a pipeline
-        for key in self.dictionary:
-            self.pipeline_entity[key] = self.dictionary[key]
-        save_changes()
-
-    def delete_property(self, **kwargs):
-        #deleted from the dictionary
-        super().delete_property(**kwargs)
-        #deletes the same property from the pipeline entity
-        for key in kwargs:
-            if key in self.pipeline_entity:
-                del self.pipeline_entity[key]
-        save_changes()
-
-    def save_changes(self):
-        pipeline = self.pipeline_entity
-        datastore_client.put(pipeline)
-        
-    def run_pipeline(self):
-        super().run_pipeline()
