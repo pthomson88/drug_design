@@ -1,16 +1,22 @@
+import datetime
+
 from drug_design.load_data import load_data
 from drug_design.similarity import run_similarity
 from drug_design.gsheet_store import gsheet_store
 from drug_design.datasets.DataSets import DataSet
-from drug_design.save_load import load_obj, save_obj
-from drug_design.key_increment import key_increment, get_shifted_key
+from drug_design.save_load import load_obj, save_obj, store_time, fetch_times
+from drug_design.key_increment import key_increment, get_shifted_key, sub_key_gen
 import pandas as pd
 import drug_design
-#same repo test 1
-#test comment B same repo edit
+
 from flask import Flask, jsonify, request, render_template, redirect, url_for, Markup
 from flask_redis import FlaskRedis
 from wtforms import Form, BooleanField, StringField, validators
+
+#This will try to connect to the datastore using whatever credentials it finds
+#the datastore is always needed for main
+from google.cloud import datastore
+datastore_client = datastore.Client()
 
 def create_app():
     app = Flask(__name__)
@@ -20,12 +26,17 @@ def create_app():
     #The main function to take you through option
     @app.route("/index/", methods=['GET','POST'])
     def main():
+        # Store the current access time in Datastore.
+        store_time(datetime.datetime.now())
+
+        # Fetch the most recent 10 access times from Datastore.
+        times = fetch_times(1)
+
         msg = "Welcome to the main page"
-        a = "You can hit Ctrl-C at any time to exit the program \n "
         b = "You already have some data loaded, your options are:"
         pipeline = load_obj('tmp_pipeline')
         if isinstance(pipeline,dict):
-            return render_template('welcome_options.html', var1 = msg, var2 = a, var3 = b)
+            return render_template('welcome_options.html', var1 = msg, times = times, var3 = b)
 
         else:
             b = "Before we get started you're going to need to load some data."
@@ -88,7 +99,9 @@ def create_app():
             print('normalisation off')
         pipeline = load_obj('tmp_pipeline')
         sim_key = key_increment("similarity_score",**pipeline)
-        norm_key = key_increment("normalise_scores",**pipeline)
+
+        #sub_key_gen always applies the sub_keys to the highest increment (or most recent parent key)
+        norm_key = sub_key_gen("normalise_scores", "similarity_score", **pipeline)
 
         #The pipeline is updated with the sim_key kept unique by an inreasing integer
         pipeline[sim_key] = header
@@ -109,7 +122,8 @@ def create_app():
 
         SMILES = request.form["Smiles"]
         pipeline = load_obj('tmp_pipeline')
-        new_entry = key_increment("single_smiles",**pipeline)
+
+        new_entry = sub_key_gen("single_smiles", "similarity_score", **pipeline)
 
         pipeline[new_entry] = SMILES
         save_obj(pipeline, 'tmp_pipeline')
@@ -122,7 +136,7 @@ def create_app():
 
         ref_data_key = request.form["dataset_choice"]
         pipeline = load_obj('tmp_pipeline')
-        new_entry = key_increment("dataframe_smiles_ref",**pipeline)
+        new_entry = sub_key_gen("dataframe_smiles_ref", "similarity_score", **pipeline)
         pipeline[new_entry] = ref_data_key
         save_obj(pipeline, 'tmp_pipeline')
         #pipeline keys so far ["source_key", "similarity_score", "normalise_scores", "dataframe_smiles"]
@@ -134,7 +148,7 @@ def create_app():
     def similarity_score_page_dataframe_2():
         ref_column = request.form["column_choice"]
         pipeline = load_obj('tmp_pipeline')
-        new_entry = key_increment("dataframe_smiles_col",**pipeline)
+        new_entry = sub_key_gen("dataframe_smiles_col", "similarity_score", **pipeline)
         pipeline[new_entry] = ref_column
         save_obj(pipeline, 'tmp_pipeline')
         #pipeline keys so far ["source_key", "similarity_score", "normalise_scores", "dataframe_smiles", "dataframe_smiles_col"]

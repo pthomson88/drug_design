@@ -1,14 +1,15 @@
-/obj/tmp_key.pkl
-/obj/tmp_pipeline.pkl
-/obj/max_temp.pkl
-/obj/n_temp.pkl
+drug_design/obj/tmp_key.pkl
+drug_design/obj/tmp_pipeline.pkl
+drug_design/obj/max_temp.pkl
+drug_design/obj/n_temp.pkl
 
 
 *.pyc
 __pycache__/
 drug_design/__pycache__/
 drug_design/datasets/__pycache__/
-obj/__pycache__/
+drug_design/service_accounts.json
+drug_design/obj/__pycache__/
 
 instance/
 

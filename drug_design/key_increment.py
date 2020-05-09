@@ -1,8 +1,24 @@
 #These three functions are involved in returning a unique key
+
+def sub_key_gen(new, parent_key_string, **dictionary):
+
+    tmp_key = "null"
+    max_increment = 100
+
+    for key in dictionary:
+        if parent_key_string in key:
+            increment = int(key[-3])
+            if increment > max_increment:
+                max_increment = increment
+                tmp_key = key
+    new_key = "sub_" + tmp_key + "_" + new
+
+    return new_key
+
 #checks for a clash then if there is increments the integer at the end of the key until there is no clash
 def key_increment(key_string, **dictionary):
     clash = clash_check(key_string, **dictionary)
-    n = 1
+    n = 100
     new_key_string = key_string
     while clash == True:
         new_key_string = update_key(key_string, n)

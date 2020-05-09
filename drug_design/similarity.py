@@ -2,7 +2,7 @@
 #this approach was taken from: https://stackabuse.com/levenshtein-distance-and-text-similarity-in-python/
 import numpy as np
 import pandas as pd
-from .save_load import *
+
 from multiprocessing import Pool, cpu_count
 
 #Take a dataframe with SMILES strings and one target SMILES then add a column of the scores
@@ -41,13 +41,6 @@ def run_similarity(dataframe,column_key,**kwargs):
                         except FutureWarning:
                             print("Ignoring FutureWarning...")
                         dataframe = dataframe.drop(columns=['new'])
-                        print(".")
-                        max = int(load_obj('max_temp'))
-                        n = load_obj('n_temp')
-                        n = n + len(dataframe.index)
-                        save_obj(n,'n_temp')
-                        percent = 100 * (n / max)
-                        print("Chunk Done          " + str(percent) + "% of total")
 
                         return dataframe
 

@@ -1,6 +1,10 @@
 import pickle
 import os
 
+#This will try to connect to the datastore using whatever credentials it finds
+#from google.cloud import datastore
+#datastore_client = datastore.Client()
+
 def set_path(name ):
     script_dir = os.path.dirname(__file__)
     rel_path = 'obj/'+ name + '.pkl'
@@ -20,3 +24,40 @@ def load_obj(name ):
     except FileNotFoundError:
         error_msg = "Error: I couldn't find a file with that name"
         return error_msg
+
+def store_time(dt):
+    entity = datastore.Entity(key=datastore_client.key('visit'))
+    entity.update({
+        'timestamp': dt
+    })
+
+    datastore_client.put(entity)
+
+def fetch_times(limit):
+    query = datastore_client.query(kind='visit')
+    query.order = ['-timestamp']
+
+    times = query.fetch(limit=limit)
+
+    return times
+
+def store_entity(kind, name):
+    ek = datastore_client.key(kind, name)
+    entity = datastore.Entity(key=ek)
+    task['description'] = 'Buy milk'
+
+    # Saves the entity
+    datastore_client.put(task)
+
+
+    entity.update({
+        'timestamp': dt
+    })
+
+    datastore_client.put(entity)
+
+def fetch_pipeline(ek,limit):
+    query = datastore_client.query(kind=ek)
+    result = query.fetch(limit=limit)
+
+    return result
