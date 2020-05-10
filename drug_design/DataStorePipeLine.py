@@ -72,6 +72,3 @@ class DataStorePipeLine(PipeLine):
     def save_changes_datastore(self):
         pipeline = self.pipeline_entity
         datastore_client.put(pipeline)
-
-    def run_pipeline_datastore(self):
-        super().run_pipeline()
