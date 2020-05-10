@@ -4,7 +4,8 @@ from drug_design.load_data import load_data
 from drug_design.similarity import run_similarity
 from drug_design.gsheet_store import gsheet_store
 from drug_design.datasets.DataSets import DataSet
-from drug_design.save_load import load_obj, save_obj, store_time, fetch_times
+from drug_design.save_load import load_obj, save_obj
+from drug_design.fetch_visits import store_time, fetch_times
 from drug_design.key_increment import key_increment, get_shifted_key, sub_key_gen
 from drug_design.DataStorePipeLine import DataStorePipeLine
 import pandas as pd
@@ -13,11 +14,6 @@ import drug_design
 from flask import Flask, jsonify, request, render_template, redirect, url_for, Markup
 from flask_redis import FlaskRedis
 from wtforms import Form, BooleanField, StringField, validators
-
-#This will try to connect to the datastore using whatever credentials it finds
-#the datastore is always needed for main
-from google.cloud import datastore
-datastore_client = datastore.Client()
 
 def create_app():
     app = Flask(__name__)
@@ -96,13 +92,15 @@ def create_app():
         pipeline = pipeline_obj.dictionary
         sim_key = key_increment("similarity_score",**pipeline)
 
-        #sub_key_gen always applies the sub_keys to the highest increment (or most recent parent key)
-        norm_key = sub_key_gen("normalise_scores", "similarity_score", **pipeline)
-
-        #The pipeline is updated with the sim_key kept unique by an inreasing integer
-        kwargs = {sim_key : header, norm_key : norm}
+        #update the sim key and reload the dictionary
+        kwargs = {sim_key : header}
         pipeline_obj.update_property_datastore(**kwargs)
-        #pipeline keys so far ["source_key", "similarity_score", "normalise_scores"]
+        pipeline = pipeline_obj.dictionary
+
+        #generate correct norm key
+        norm_key = sub_key_gen("normalise", "similarity_score", **pipeline)
+        kwargs2 = {norm_key : norm}
+        pipeline_obj.update_property_datastore(**kwargs2)
 
         if request.form["what_smiles"] == "single_smiles":
             return render_template('text_entry.html')

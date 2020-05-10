@@ -2,6 +2,7 @@ import datetime
 from .save_load import load_obj, save_obj
 from .load_data import load_data
 from .similarity import run_similarity
+from .key_increment import sub_key_gen
 
 #Class definition of a pipeline
 class PipeLine(object):
@@ -30,40 +31,43 @@ class PipeLine(object):
         ds_key = self.source_key
         dataset = load_data(ds_key)
 
-        #look for similariy scoring
-        for key in pipeline:
-            if key[16] == "similarity_score":
-                tmp_key = key
-                sim_pipe = {tmp_key : pipeline[tmp_key]}
-                for key in pipeline:
-                    if tmp_key in key:
-                        sim_pipe[key] = pipeline[key]
+        #A dict of all properties mentioning similarity score
+        all_sim_pipe = {key:pipeline[key] for key in pipeline if "similarity_score" in key}
+        #a dict of all properties not labelled ub mentioning similarity score
+        master_sim_pipe = {key:all_sim_pipe[key] for key in all_sim_pipe if not key[:3] == "sub" }
 
+        #iterate through similarirt tasks
+        for key in master_sim_pipe:
+            #e.g. a dict with every property mentoining similarity_score_100
+            tmp_sim_pipe = {k:all_sim_pipe[k] for k in all_sim_pipe if key in k}
+            #which column to apply similarity to
+            header = tmp_sim_pipe[key]
+            #whether to normalise scores
+            norm_key = sub_key_gen("normalise", key, **tmp_sim_pipe)
+            norm = tmp_sim_pipe[norm_key]
 
-                header = sim_pipe[tmp_key]
-                norm_key = sub_key_gen("normalise_scores", tmp_key, **sim_pipe)
-                norm = sim_pipe[norm_key]
+            #iterate through the tmp_sim_pipe
+            for sim_key in tmp_sim_pipe:
 
-                for key in sim_pipe:
-                    #look for single smiles task
-                    if "single_smiles" in key:
-                        mol_reference = {"SMILES" : [sim_pipe[key],norm]}
-                        for chunk in dataset[ds_key].chunks:
-                            chunk = run_similarity(chunk,header,**mol_reference)
-                        dataset[ds_key].stitch_chunks()
+                #are there any single smiles jobs
+                if "single_smiles" in sim_key:
+                    mol_reference = {"SMILES" : [tmp_sim_pipe[sim_key],norm]}
+                    for chunk in dataset[ds_key].chunks:
+                        chunk = run_similarity(chunk,header,**mol_reference)
+                    dataset[ds_key].stitch_chunks()
 
-                    #look for dataframe smiles task next
-                    if "dataframe_smiles_ref" in key:
-                        ref_key = pipeline[key]
-                        ref_dataset = load_data(ref_key)
-                        #sub key gen can also be used to generate an existing key
-                        col_key = sub_key_gen("dataframe_smiles_col", tmp_key, **sim_pipe)
-                        ref_column = pipeline[col_key]
-                        #pass in the reference df as its DataSet object
-                        mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column, norm] }
+                #look for dataframe smiles task next
+                if "dataframe_smiles_ref" in sim_key:
+                    ref_key = pipeline[key]
+                    ref_dataset = load_data(ref_key)
+                    #sub key gen can also be used to generate an existing key
+                    col_key = sub_key_gen("dataframe_smiles_col", tmp_key, **tmp_sim_pipe)
+                    ref_column = pipeline[col_key]
+                    #pass in the reference df as its DataSet object
+                    mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column, norm] }
 
-                        dataset[ds_key].chunks = [ run_similarity(df,header,**mol_reference) for df in dataset[ds_key].chunks]
-                        dataset[ds_key].stitch_chunks()
+                    dataset[ds_key].chunks = [ run_similarity(df,header,**mol_reference) for df in dataset[ds_key].chunks]
+                    dataset[ds_key].stitch_chunks()
 
         return dataset[ds_key]
 
