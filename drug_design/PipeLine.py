@@ -58,10 +58,10 @@ class PipeLine(object):
 
                 #look for dataframe smiles task next
                 if "dataframe_smiles_ref" in sim_key:
-                    ref_key = pipeline[key]
+                    ref_key = pipeline[sim_key]
                     ref_dataset = load_data(ref_key)
                     #sub key gen can also be used to generate an existing key
-                    col_key = sub_key_gen("dataframe_smiles_col", tmp_key, **tmp_sim_pipe)
+                    col_key = sub_key_gen("dataframe_smiles_col", key, **tmp_sim_pipe)
                     ref_column = pipeline[col_key]
                     #pass in the reference df as its DataSet object
                     mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column, norm] }
