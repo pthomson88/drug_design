@@ -1,11 +1,28 @@
 #These three functions are involved in returning a unique key
+
+def sub_key_gen(new, parent_key_substring, **dictionary):
+
+    tmp_key = "null"
+    max_increment = 100
+
+    for key in dictionary:
+        l = len(parent_key_substring)
+        if key[:l] == parent_key_substring:
+            increment = int(key[-3:])
+            if increment >= max_increment:
+                max_increment = increment
+                tmp_key = key
+    new_key = "sub_" + tmp_key + "_" + new
+
+    return new_key
+
 #checks for a clash then if there is increments the integer at the end of the key until there is no clash
-def key_increment(key_string, **dictionary):
-    clash = clash_check(key_string, **dictionary)
-    n = 1
-    new_key_string = key_string
+def key_increment(key_substring, **dictionary):
+    clash = clash_check(key_substring, **dictionary)
+    n = 100
+    new_key_string = update_key(key_substring, n)
     while clash == True:
-        new_key_string = update_key(key_string, n)
+        new_key_string = update_key(key_substring, n)
         clash = clash_check(new_key_string, **dictionary)
         n = n + 1
     return new_key_string
@@ -18,7 +35,7 @@ def clash_check(key_string, **dictionary):
     return clash
 
 def update_key(key_string, n):
-    new_key_string = key_string + str(n)
+    new_key_string = key_string + "_" + str(n)
     return new_key_string
 
 #this function returns the next (or k next) key in the dictionary

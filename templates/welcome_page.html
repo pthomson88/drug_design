@@ -1,6 +1,7 @@
 <head>
     <p>{{ var1}}</p>
-    <p>{{ var2}}</p>
+    {% for time in times %}  <p>{{ time['timestamp'] }}</p>
+    {% endfor %}
     <p>{{ var3}}</p>
     <input action = "{{ url_for('load_data_form')}}" type="submit">
 </head>
