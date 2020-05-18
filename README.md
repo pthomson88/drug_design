@@ -28,7 +28,7 @@ cd drug_design
 ```
    * Now to load the environment:
 ```
-conda env create -f drug_design.yml
+conda env create -f drug_design.yaml
 ```
 * Finally you'll want to get going so activate your new conda environment:
 ```

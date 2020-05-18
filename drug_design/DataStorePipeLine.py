@@ -1,74 +1,86 @@
 from .PipeLine import PipeLine
+import settings
 
-#This will try to connect to the datastore using whatever credentials it finds
-from google.cloud import datastore
-datastore_client = datastore.Client()
+import requests
 
 #Class definition of a datastore pipeline
 class DataStorePipeLine(PipeLine):
 
     def __init__(self,load, **kwargs):
-
-        kind = 'Pipeline'
         if load == True:
+            #load = True so first kets get the pipeline from the datastore:
+            if not 'user_id' in kwargs or not 'session_key' in kwargs:
+                return "Error - insufficient kwargs passed"
             self.user_id = kwargs['user_id']
-            #one pipeline per user to start
-            self.id = self.user_id
-            name = self.id
-            pipeline_key = datastore_client.key(kind,name)
-            self.pipeline_entity = datastore_client.get(pipeline_key)
+            self.session_key = kwargs['session_key']
+            url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
+            self.pipeline_entity = requests.get(url)
+            #if the session key passed doesn't match that returned then we'll have problems later so send an error
+            if not self.pipeline_entity['session_key'] == self.session_key:
+                return "Error - session keys don't match"
 
-            #if data is loaded then dictionary and created properties need added
-            self.dictionary = {'source_key' : ''}
+            #Dictionary, source_key and created properties need added to the Pipeline object
             self.created = self.pipeline_entity['created']
-
-            for key in self.pipeline_entity:
-                if key != 'created':
-                    if key != 'user_id':
-                        self.dictionary[key] = self.pipeline_entity[key]
-
+            self.dictionary = {
+                key : self.pipeline_entity[key]
+                for key in self.pipeline_entity
+                if not key == 'created'
+                or not key == 'user_id'
+                or not key == 'session_key'
+            }
             self.source_key = self.dictionary['source_key']
+
+            #the pipeline is loaded at this stage - all that's left to do is update any newly passed arguments
             self.update_property_datastore(**kwargs)
 
         else:
-            #obviously this is a placeholder and needs user id funcitonality piped in
-            self.user_id = 'test'
-            #This will establish created, source_key and dictionary properties
+            #If we aren't loading data then we need to crearte a new pipeline - first we need a new session:
+            if not 'user_id' in kwargs:
+                return "Error - insufficient kwargs passed"
+            self.user_id = kwargs['user_id']
+            url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + self.user_id
+            response = requests.get(url)
+            self.session_key = response['session_key']
+
+            #Next we need to build a pipeline everything it needs
             super().__init__(**kwargs)
-            #one pipeline per user to start
-            self.id = self.user_id
-            name = self.id
-            kind = 'Pipeline'
-            pipeline_key = datastore_client.key(kind,name)
-            self.pipeline_entity = datastore.Entity(key=pipeline_key)
 
-            #If the data is new then the user_id and created properties need added
-            self.pipeline_entity['created'] = self.created
-            self.pipeline_entity['user_id'] = self.user_id
+            #We need to prepare the data to post to the datastore
+            url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
+            #add the properties needed then use to create a new pipeline
+            pre_pipeline_entity = { key : kwargs[key] for key in kwargs }
+            pre_pipeline_entity['created'] = self.created
+            pre_pipeline_entity['user_id'] = self.user_id
+            pre_pipeline_entity['session_key'] = self.session_key
 
-            #update the pipeline with kwargs  - no need to update the dictionary as this was done already
-            self.update_property2_datastore(**kwargs)
+            #finally we can send the data and use the response to create the pipeline_entity property
+            response = requests.post(url,data=pre_pipeline_entity)
+            self.pipeline_entity = response['pipeline_entity']
 
     def update_property_datastore(self,**kwargs):
-    #use this when updating properties separately from initialising a Pipeline
-        super().update_property(**kwargs)
-        self.update_property2_datastore(**kwargs)
-
-    def update_property2_datastore(self, **kwargs):
-    #this is for use as part of initialising a pipeline
-        for key in self.dictionary:
-            self.pipeline_entity[key] = self.dictionary[key]
-        self.save_changes_datastore()
+        update = self.handle_datastore_properties()
+        super().update_property(**update)
+        #the datastore can be updated with everything
+        url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
+        response = requests.put(url,data=kwargs)
+        self.pipeline_entity = response['pipeline_entity']
 
     def delete_property_datastore(self, **kwargs):
-        #deleted from the dictionary
-        super().delete_property(**kwargs)
+        update = self.handle_datastore_properties()
+        super().delete_property(**update)
         #deletes the same property from the pipeline entity
-        for key in kwargs:
-            if key in self.pipeline_entity:
-                del self.pipeline_entity[key]
-        self.save_changes_datastore()
+        url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id + '/delete_properties'
+        response = requests.put(url,data=kwargs)
+        self.pipeline_entity = response['pipeline_entity']
 
-    def save_changes_datastore(self):
-        pipeline = self.pipeline_entity
-        datastore_client.put(pipeline)
+    def handle_datastore_properties(self, **kwargs):
+        if not 'session_key' in kwargs:
+            return 'Error - you need to supply a session_key'
+        update = {
+            key : kwargs[key]
+            for key in kwargs
+            if not key == 'created'
+            or not key == 'user_id'
+            or not key == 'session_key'
+        }
+        return update
