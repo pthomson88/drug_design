@@ -1,4 +1,5 @@
 import datetime
+import pytz
 from .save_load import load_obj, save_obj
 from .load_data import load_data
 from .similarity import run_similarity
@@ -9,7 +10,7 @@ class PipeLine(object):
     """A class for the pipeline object."""
     #A pipeline consists of a dictionary defining actions, a source_key and a created datetime
     def __init__(self, **kwargs):
-        self.created = datetime.datetime.now()
+        self.created = datetime.datetime.now(pytz.utc)
         self.dictionary = {'source_key' : '' }
         self.update_property(**kwargs)
 

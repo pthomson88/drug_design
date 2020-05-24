@@ -1,29 +1,28 @@
 import datetime
+import requests
 
 from drug_design.load_data import load_data
 from drug_design.similarity import run_similarity
 from drug_design.gsheet_store import gsheet_store
 from drug_design.datasets.DataSets import DataSet
 from drug_design.save_load import load_obj, save_obj
-from drug_design.fetch_visits import store_time, fetch_times
 from drug_design.key_increment import key_increment, get_shifted_key, sub_key_gen
 from drug_design.DataStorePipeLine import DataStorePipeLine
 import settings
 import pandas as pd
 
-from flask import Flask, jsonify, request, render_template, redirect, url_for, Markup
+from flask import Flask, jsonify, request, render_template, redirect, url_for, Markup, make_response
 from wtforms import Form, BooleanField, StringField, validators
 
 def create_app():
 
     app = Flask(__name__)
 
-
-
     def get_session_key(user_id):
-        url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + self.user_id
+        url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + user_id
         try:
-            response = requests.get(url)
+            r = requests.get(url)
+            response = r.json()
             #saving the session_key to the pip
             session_key =  response['session_key']
             return session_key
@@ -32,40 +31,36 @@ def create_app():
 
     def set_session_cookie(user_id,response_contents):
         session_key = get_session_key(user_id)
-        response = make_response( response_contents)
+        response = make_response(response_contents)
         response.set_cookie('session_key', session_key)
-        return session_key, response;
+        return {'session_key' : session_key, 'response' : response}
 
     #The main function to take you through option
     @app.route("/index/", methods=['GET','POST'])
     def main():
-        # Store the current access time in Datastore.
-        store_time(datetime.datetime.now())
-
-        # Fetch the most recent 10 access times from Datastore.
-        times = fetch_times(1)
 
         msg = "Welcome to the main page"
-
-
+        a = "hello world"
 
         #Session in  cookie - try and use that
         try:
             session_key = request.cookies.get('session_key')
-            pipeline = DataStorePipeLine(True, user_id = 'test',session_key = session_key)
-            b = "You already have some data loaded, your options are:"
-            return render_template('welcome_options.html', var1 = msg, times = times, var3 = b)
+        finally:
+            if not session_key == None:
+                b = "You already have some data loaded, your options are:"
+                pipeline = DataStorePipeLine(True, user_id = 'test',session_key = session_key)
+                if pipeline.takeover == True:
+                    b = "It looks like you have loaded data in a separate session, your options are:"
+                return render_template('welcome_options.html', var1 = msg, times = times, var3 = b)
 
-        #no session in cookie - ask for a new one
-        except:
-            session_key, response = set_session_cookie('test',render_template('welcome_page.html', var1 = msg, var2 = a, var3 = b))
-            pipeline = DataStorePipeLine(True, user_id = 'test',session_key = session_key)
-            b = "Before we get started you're going to need to load some data."
-            return response
-
-
-
-
+            #no session in cookie - ask for a new one
+            else:
+                b = "Before we get started you're going to need to load some data."
+                cookied_response= set_session_cookie('test',render_template('welcome_page.html', var1 = msg, var2 = a, var3 = b))
+                session_key = cookied_response['session_key']
+                response = cookied_response['response']
+                pipeline = DataStorePipeLine(True, user_id = 'test',session_key = session_key)
+                return response
 
     @app.route('/example-load-data/')
     def example_load_data_form():
@@ -94,13 +89,15 @@ def create_app():
 
         #if the request is to clear the pipe then we should be starting a new session
         if clear == "clear":
-            try:
-                session_key, response = set_session_cookie('test', redirect( url_for('main') ))
-                pipeline = DataStorePipeLine(False,source_key = key, user_id = 'test', session_key = session_key)
-                return response
-            except:
-                #if it doesn't work indicate that there is a conflict
-                abort(409)
+            cookied_response = set_session_cookie('test', redirect( url_for('main') ))
+            session_key = cookied_response['session_key']
+            response = cookied_response['response']
+            pipeline = DataStorePipeLine(False,source_key = key, user_id = 'test', session_key = session_key)
+            #If you go via the index page you can take over an old pipeline but if you
+            if pipeline.takeover == True:
+                response = "<h1>Pipeline takeover warning</h1><p>You have take over this pipeline from an older session - clearing a pipeline can't be undone </p>"
+
+            return response
 
         else:
             #If the pipeline doesn't exist yet - this upsert will create it. You should already have a session by now
@@ -108,8 +105,6 @@ def create_app():
             pipeline = DataStorePipeLine(True,user_id = 'test',source_key = key, session_key = session_key)
 
             return redirect( url_for('main') )
-
-
 
 
     @app.route('/sim-score/', methods=['GET','POST'])
