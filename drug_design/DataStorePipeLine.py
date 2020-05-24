@@ -43,8 +43,8 @@ class DataStorePipeLine(PipeLine):
             key : self.pipeline_entity[key]
             for key in self.pipeline_entity
             if not key == 'created'
-            or not key == 'user_id'
-            or not key == 'session_key'
+            if not key == 'user_id'
+            if not key == 'session_key'
         }
         self.source_key = self.dictionary['source_key']
 
@@ -78,20 +78,22 @@ class DataStorePipeLine(PipeLine):
             response = r.json()
             self.pipeline_entity = response['pipeline_entity']
         else:
-            abort(r.status_code)
+            raise Exception(r.status_code)
 
     def update_property_datastore(self,**kwargs):
         update = self.handle_datastore_properties(**kwargs)
-        super().update_property(**update)
-        #the datastore can be updated with everything
-        url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
-        r = requests.put(url,json=kwargs)
-        #checking the update has been received and if not aborting with the status_code
-        if r.status_code == 201:
-            response = r.json()
-            self.pipeline_entity = response['pipeline_entity']
-        else:
-            abort(r.status_code)
+        #if there is something to update then update
+        if bool(update):
+            super().update_property(**update)
+            #the datastore can be updated with everything
+            url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
+            r = requests.put(url,json=kwargs)
+            #checking the update has been received and if not aborting with the status_code
+            if r.status_code == 201:
+                response = r.json()
+                self.pipeline_entity = response['pipeline_entity']
+            else:
+                raise Exception(r.status_code)
 
     def delete_property_datastore(self, **kwargs):
         update = self.handle_datastore_properties()
@@ -107,7 +109,7 @@ class DataStorePipeLine(PipeLine):
             key : kwargs[key]
             for key in kwargs
             if not key == 'created'
-            or not key == 'user_id'
-            or not key == 'session_key'
+            if not key == 'user_id'
+            if not key == 'session_key'
         }
         return update

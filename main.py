@@ -48,10 +48,26 @@ def create_app():
         finally:
             if not session_key == None:
                 b = "You already have some data loaded, your options are:"
-                pipeline = DataStorePipeLine(True, user_id = 'test',session_key = session_key)
-                if pipeline.takeover == True:
-                    b = "It looks like you have loaded data in a separate session, your options are:"
-                return render_template('welcome_options.html', var1 = msg, times = times, var3 = b)
+                response = render_template('welcome_options.html', var1 = msg, var3 = b)
+                #check that the pipeline is from this session
+                check_session_key = get_session_key('test')
+                try:
+                    assert check_session_key == session_key
+                except AssertionError:
+                    #If the session cookie doesn't match the active session then set it again
+                    cookied_session = set_session_cookie('test',response)
+                    session_key = cookied_session['session_key']
+                    response = cookied_session['response']
+                finally:
+                    #try and build a pipeline
+                    pipeline = DataStorePipeLine(True, user_id = 'test',session_key = session_key)
+                    try:
+                        #any situation where a valid session key is passed buyt it doesn't match the pipeline
+                        assert pipeline.takeover == True
+                    except AssertionError:
+                        b = "It looks like you have loaded data in a separate session, your options are:"
+                    finally:
+                        return response
 
             #no session in cookie - ask for a new one
             else:
@@ -94,10 +110,12 @@ def create_app():
             response = cookied_response['response']
             pipeline = DataStorePipeLine(False,source_key = key, user_id = 'test', session_key = session_key)
             #If you go via the index page you can take over an old pipeline but if you
-            if pipeline.takeover == True:
-                response = "<h1>Pipeline takeover warning</h1><p>You have take over this pipeline from an older session - clearing a pipeline can't be undone </p>"
-
-            return response
+            try:
+                assert pipeline.takeover == True
+            except:
+                response = "<h1>Pipeline takeover warning</h1><p>You have taken over this pipeline from an older session - clearing a pipeline can't be undone </p>"
+            finally:
+                return response
 
         else:
             #If the pipeline doesn't exist yet - this upsert will create it. You should already have a session by now
