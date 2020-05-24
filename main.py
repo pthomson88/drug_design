@@ -111,9 +111,9 @@ def create_app():
             pipeline = DataStorePipeLine(False,source_key = key, user_id = 'test', session_key = session_key)
             #If you go via the index page you can take over an old pipeline but if you
             try:
-                assert pipeline.takeover == True
+                assert not pipeline.takeover
             except:
-                response = "<h1>Pipeline takeover warning</h1><p>You have taken over this pipeline from an older session - clearing a pipeline can't be undone </p>"
+                response = "<h1>Pipeline takeover warning</h1><p>You have taken over this pipeline from an older session - clearing a pipeline can't be undone </p> <p><a href="{{ url_for('main') }}">Continue to options</a></p>"
             finally:
                 return response
 
