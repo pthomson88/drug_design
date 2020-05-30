@@ -11,7 +11,7 @@ from drug_design.DataStorePipeLine import DataStorePipeLine
 import settings
 import pandas as pd
 
-from flask import Flask, jsonify, request, render_template, redirect, url_for, Markup, make_response
+from flask import Flask, jsonify, request, render_template, redirect, url_for, Markup, make_response, abort
 from wtforms import Form, BooleanField, StringField, validators
 
 def create_app():
@@ -29,53 +29,66 @@ def create_app():
         except:
             return "Something went wrong - maybe a session is already active for this user"
 
-    def set_session_cookie(user_id,response_contents):
+    def set_session_cookie(user_id, response_contents):
         session_key = get_session_key(user_id)
         response = make_response(response_contents)
         response.set_cookie('session_key', session_key)
+        response.set_cookie('user_id', user_id)
         return {'session_key' : session_key, 'response' : response}
 
     #The main function to take you through option
     @app.route("/index/", methods=['GET','POST'])
     def main():
-
         msg = "Welcome to the main page"
         a = "hello world"
 
-        #Session in  cookie - try and use that
+        #only test for now
+        user_id = 'test'
+        #Check if there is a cookie
         try:
-            session_key = request.cookies.get('session_key')
+            cookie_session_key = request.cookies.get('session_key')
         finally:
-            if not session_key == None:
-                b = "You already have some data loaded, your options are:"
-                response = render_template('welcome_options.html', var1 = msg, var3 = b)
-                #check that the pipeline is from this session
-                check_session_key = get_session_key('test')
-                try:
-                    assert check_session_key == session_key
-                except AssertionError:
-                    #If the session cookie doesn't match the active session then set it again
-                    cookied_session = set_session_cookie('test',response)
-                    session_key = cookied_session['session_key']
-                    response = cookied_session['response']
-                finally:
-                    #try and build a pipeline
-                    pipeline = DataStorePipeLine(True, user_id = 'test',session_key = session_key)
+            #if there is a cookie
+            if not cookie_session_key == None:
+                #either returns a  new active session or activates an existing one
+                session_key = get_session_key(user_id)
+                #if the cookie matches then try and load a pipeline
+                if cookie_session_key == session_key:
+                    #try and build a pipeline - if there is a session problem it should be handled by BE
                     try:
-                        #any situation where a valid session key is passed buyt it doesn't match the pipeline
-                        assert pipeline.takeover == True
-                    except AssertionError:
-                        b = "It looks like you have loaded data in a separate session, your options are:"
-                    finally:
-                        return response
+                        #if there is an existing pipeline this should not attempt the update as no extra kwargs are passed
+                        #if there isn't a pipeline a new one is created
+                        pipeline = DataStorePipeLine(True, user_id = user_id,session_key = session_key)
+                    except:
+                        #this could be 404 for a pipeline not being found, or the user being barred
+                        #note that the session should not be dormant having just been activated in get_session_key
+                        abort(404)
+                    #no need to save a new cookie
+                    b = "You already have some data loaded, your options are:"
+                    response = render_template('welcome_options.html', var1 = msg, var2 = b)
+                    return response
+                #if the cookie doesn't match then the session was not started here
+                #alternatively your session might have run dormant
+                else:
+                    return "<h>Session doesn't match cookie</h><p>This session was not started here. Clearing your cookies will let you start a new session</p>"
 
-            #no session in cookie - ask for a new one
+            #aka there is no cookie to match against session_keys
             else:
+                #try:
+                    #just create a new pipeline
+                pipeline = DataStorePipeLine(False, user_id = user_id)
+                #except:
+                    #this could be 404 for a pipeline not being found, or the user being barred
+                    #note that the session should not be dormant having just been activated in get_session_key
+                    #return "<h>Not Found</h><p>Either the pipeline you're looking for isn't there or the user ID you're using is barred.</p>"
+
+                #a new cookie needs saved
+                session_key = pipeline.session_key
                 b = "Before we get started you're going to need to load some data."
-                cookied_response= set_session_cookie('test',render_template('welcome_page.html', var1 = msg, var2 = a, var3 = b))
-                session_key = cookied_response['session_key']
-                response = cookied_response['response']
-                pipeline = DataStorePipeLine(True, user_id = 'test',session_key = session_key)
+                pre_response = render_template('welcome_page.html', var1 = msg, var2 = b)
+                cookied_session = set_session_cookie(user_id, pre_response)
+                response = cookied_session['response']
+
                 return response
 
     @app.route('/example-load-data/')
@@ -109,13 +122,7 @@ def create_app():
             session_key = cookied_response['session_key']
             response = cookied_response['response']
             pipeline = DataStorePipeLine(False,source_key = key, user_id = 'test', session_key = session_key)
-            #If you go via the index page you can take over an old pipeline but if you
-            try:
-                assert not pipeline.takeover
-            except:
-                response = "<h1>Pipeline takeover warning</h1><p>You have taken over this pipeline from an older session - clearing a pipeline can't be undone </p> <p><a href="{{ url_for('main') }}">Continue to options</a></p>"
-            finally:
-                return response
+            return response
 
         else:
             #If the pipeline doesn't exist yet - this upsert will create it. You should already have a session by now

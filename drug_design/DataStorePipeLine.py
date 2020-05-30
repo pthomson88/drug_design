@@ -21,7 +21,12 @@ class DataStorePipeLine(PipeLine):
         self.user_id = kwargs['user_id']
         self.session_key = kwargs['session_key']
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
-        self.pipeline_entity = requests.get(url).json()
+        r = requests.get(url)
+        if r.status_code == 404:
+            raise Exception(404)
+        else:
+            self.pipeline_entity = r.json()
+
         #if there isn't a created date or source key then a new pipeline is created
         try:
             assert 'created' in self.pipeline_entity
@@ -33,9 +38,7 @@ class DataStorePipeLine(PipeLine):
         try:
             assert self.pipeline_entity['session_key'] == self.session_key
         except AssertionError:
-            self.pipeline_entity['session_key'] = self.session_key
-            #the takeover property is either None or True - it is only created on takeover
-            self.takeover = True
+            raise Exception("The session_key in the pipeline doesn't match that being passed")
 
         #Dictionary, source_key and created properties need added to the Pipeline object
         self.created = self.pipeline_entity['created']
@@ -83,6 +86,8 @@ class DataStorePipeLine(PipeLine):
     def update_property_datastore(self,**kwargs):
         update = self.handle_datastore_properties(**kwargs)
         #if there is something to update then update
+        #The session key needs to be part of the PUT request
+        kwargs['session_key'] = self.session_key
         if bool(update):
             super().update_property(**update)
             #the datastore can be updated with everything
@@ -104,7 +109,6 @@ class DataStorePipeLine(PipeLine):
         self.pipeline_entity = response['pipeline_entity']
 
     def handle_datastore_properties(self, **kwargs):
-        assert 'session_key' in kwargs
         update = {
             key : kwargs[key]
             for key in kwargs

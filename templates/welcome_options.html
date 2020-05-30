@@ -3,7 +3,7 @@
   <h1>{{ var1}}</h1>
   {% for time in times %}  <p>{{ time['timestamp'] }}</p>
   {% endfor %}
-  <div><p>{{var3}}</p></div>
+  <div><p>{{var2}}</p></div>
   <p><a href="{{ url_for('load_data_form') }}">Load a different dataset as your source file</a></p>
   <p><a href="{{ url_for('sim_score_start') }}">Generate a similarity score</a></p>
   <p><a href="{{ url_for('generate_results') }}">View the current pipeline and run it</a></p>
