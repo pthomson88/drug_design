@@ -21,9 +21,12 @@ class DataStorePipeLine(PipeLine):
         self.user_id = kwargs['user_id']
         self.session_key = kwargs['session_key']
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
+        #the pipeline will always be returned if there is an active session
+        #the session_key will be hiden by place
+        #404 is returned for a dormant session
         r = requests.get(url)
-        if r.status_code == 404:
-            raise Exception(404)
+        if r.status_code >= 400:
+            raise Exception(r.status_code)
         else:
             self.pipeline_entity = r.json()
 
@@ -33,12 +36,6 @@ class DataStorePipeLine(PipeLine):
             assert 'source_key' in self.pipeline_entity
         except AssertionError:
             self.create_new_pipeline(**kwargs)
-
-        #if the session key passed doesn't match that returned then we'll have problems later so send an error
-        try:
-            assert self.pipeline_entity['session_key'] == self.session_key
-        except AssertionError:
-            raise Exception("The session_key in the pipeline doesn't match that being passed")
 
         #Dictionary, source_key and created properties need added to the Pipeline object
         self.created = self.pipeline_entity['created']
@@ -62,6 +59,7 @@ class DataStorePipeLine(PipeLine):
 
         response = requests.get(url).json()
         self.session_key = response['session_key']
+        self.source_key = ""
 
         #Next we need to build a pipeline everything it needs
         super().__init__(**kwargs)
@@ -73,6 +71,7 @@ class DataStorePipeLine(PipeLine):
         pre_pipeline_entity['created'] = self.created
         pre_pipeline_entity['user_id'] = self.user_id
         pre_pipeline_entity['session_key'] = self.session_key
+        pre_pipeline_entity['source_key'] = self.source_key
 
         #finally we can send the data and use the response to create the pipeline_entity property
         #we check that a positive respone is returned and if not we return the error status_code
@@ -105,7 +104,8 @@ class DataStorePipeLine(PipeLine):
         super().delete_property(**update)
         #deletes the same property from the pipeline entity
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id + '/delete_properties'
-        response = requests.put(url,json=kwargs)
+        r = requests.put(url,json=kwargs)
+        response = r.json()
         self.pipeline_entity = response['pipeline_entity']
 
     def handle_datastore_properties(self, **kwargs):
@@ -117,3 +117,14 @@ class DataStorePipeLine(PipeLine):
             if not key == 'session_key'
         }
         return update
+
+    def run_datastore_pipeline(self, **kwargs):
+        #this is an empty put request to check if a valid session key is used
+        url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
+        r = requests.put(url, json=kwargs)
+        #If the session key is good then run the pipeline otherwise raise an exception
+        if r.status_code == 201:
+            result = super().run_pipeline()
+            return result
+        else:
+            raise Exception(r.status_code)

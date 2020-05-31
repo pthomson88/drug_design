@@ -27,14 +27,23 @@ def create_app():
             session_key =  response['session_key']
             return session_key
         except:
-            return "Something went wrong - maybe a session is already active for this user"
+            raise Exception("Something went wrong - maybe a session is already active for this user")
 
-    def set_session_cookie(user_id, response_contents):
-        session_key = get_session_key(user_id)
+    def set_session_cookie(user_id, response_contents, **kwargs):
+        #only try to get a session yey if you have to
+        if not 'session_key' in kwargs:
+            session_key = get_session_key(user_id)
+        else:
+            session_key = kwargs['session_key']
+
         response = make_response(response_contents)
         response.set_cookie('session_key', session_key)
         response.set_cookie('user_id', user_id)
         return {'session_key' : session_key, 'response' : response}
+
+    @app.route("/access-restricted/", methods=['GET'])
+    def access_denied():
+        return render_template('access_denied.html')
 
     #The main function to take you through option
     @app.route("/index/", methods=['GET','POST'])
@@ -50,43 +59,35 @@ def create_app():
         finally:
             #if there is a cookie
             if not cookie_session_key == None:
-                #either returns a  new active session or activates an existing one
-                session_key = get_session_key(user_id)
-                #if the cookie matches then try and load a pipeline
-                if cookie_session_key == session_key:
-                    #try and build a pipeline - if there is a session problem it should be handled by BE
-                    try:
-                        #if there is an existing pipeline this should not attempt the update as no extra kwargs are passed
-                        #if there isn't a pipeline a new one is created
-                        pipeline = DataStorePipeLine(True, user_id = user_id,session_key = session_key)
-                    except:
-                        #this could be 404 for a pipeline not being found, or the user being barred
-                        #note that the session should not be dormant having just been activated in get_session_key
-                        abort(404)
-                    #no need to save a new cookie
-                    b = "You already have some data loaded, your options are:"
-                    response = render_template('welcome_options.html', var1 = msg, var2 = b)
+                try:
+                    #if there is an existing pipeline this should not attempt the update as no extra kwargs are passed
+                    pipeline = DataStorePipeLine(True, user_id = user_id,session_key = cookie_session_key)
+                except:
+                    #if something goes wrong it's most likely the session is dormant so try and start a fresh one
+                    b = "Your last session went dormant - but don't worrry we've started a new one for you"
+                    pre_response = render_template('welcome_options.html', var1 = msg, var2 = b)
+                    cookied_session = set_session_cookie(user_id, pre_response)
+                    response = cookied_session['response']
                     return response
-                #if the cookie doesn't match then the session was not started here
-                #alternatively your session might have run dormant
-                else:
-                    return "<h>Session doesn't match cookie</h><p>This session was not started here. Clearing your cookies will let you start a new session</p>"
+
+                #succesful loading confirms this is a useful session_key
+                session_key = pipeline.session_key
+                #no need to save a new cookie
+                b = "You already have some data loaded, your options are:"
+                response = render_template('welcome_options.html', var1 = msg, var2 = b)
+                return response
 
             #aka there is no cookie to match against session_keys
             else:
-                #try:
-                    #just create a new pipeline
-                pipeline = DataStorePipeLine(False, user_id = user_id)
-                #except:
-                    #this could be 404 for a pipeline not being found, or the user being barred
-                    #note that the session should not be dormant having just been activated in get_session_key
-                    #return "<h>Not Found</h><p>Either the pipeline you're looking for isn't there or the user ID you're using is barred.</p>"
-
-                #a new cookie needs saved
+                try:
+                    pipeline = DataStorePipeLine(False, user_id = user_id)
+                except:
+                    return redirect( url_for('access_denied') )
+                #a new cookie needs saved - creating a new pipeline will generate a new key in the pipeline
                 session_key = pipeline.session_key
                 b = "Before we get started you're going to need to load some data."
                 pre_response = render_template('welcome_page.html', var1 = msg, var2 = b)
-                cookied_session = set_session_cookie(user_id, pre_response)
+                cookied_session = set_session_cookie(user_id, pre_response, session_key = session_key)
                 response = cookied_session['response']
 
                 return response
@@ -116,20 +117,22 @@ def create_app():
         key = request.form['dataset_choice']
         clear = request.form.get('clear_pipe')
 
-        #if the request is to clear the pipe then we should be starting a new session
+        # update the pipeline with the new source_key
+        session_key = request.cookies.get('session_key')
+        try:
+            pipeline_obj = DataStorePipeLine(True,user_id = 'test',source_key = key, session_key = session_key)
+        except:
+            return redirect( url_for('access_denied') )
+        pipeline = pipeline_obj.dictionary
+
+        #if the request is to clear the pipe then simply use the current session and clear the pipe
+        #This is not ideal and perhaps it would be better to create a new pipe and session from scratch
         if clear == "clear":
-            cookied_response = set_session_cookie('test', redirect( url_for('main') ))
-            session_key = cookied_response['session_key']
-            response = cookied_response['response']
-            pipeline = DataStorePipeLine(False,source_key = key, user_id = 'test', session_key = session_key)
-            return response
+            clearance = { key : pipeline[key] for key in pipeline if not key == 'source_key'}
+            if not clearance == None:
+                pipeline_obj.delete_property_datastore(**clearance, session_key = session_key)
 
-        else:
-            #If the pipeline doesn't exist yet - this upsert will create it. You should already have a session by now
-            session_key = request.cookies.get('session_key')
-            pipeline = DataStorePipeLine(True,user_id = 'test',source_key = key, session_key = session_key)
-
-            return redirect( url_for('main') )
+        return redirect( url_for('main') )
 
 
     @app.route('/sim-score/', methods=['GET','POST'])
@@ -137,7 +140,10 @@ def create_app():
         #We need to load the data to show the headers
         #You don't get to start a session from here
         session_key = request.cookies.get('session_key')
-        pipeline = DataStorePipeLine(True,user_id = 'test', session_key = session_key)
+        try:
+            pipeline = DataStorePipeLine(True,user_id = 'test', session_key = session_key)
+        except:
+            return redirect( url_for('access_denied') )
         ds_key = pipeline.source_key
         loaded_data = load_data(ds_key)
         headers = loaded_data[ds_key].headers
@@ -155,19 +161,28 @@ def create_app():
         except:
             print('normalisation off')
         session_key = request.cookies.get('session_key')
-        pipeline_obj = DataStorePipeLine(True,user_id = 'test', session_key = session_key)
+        try:
+            pipeline_obj = DataStorePipeLine(True,user_id = 'test', session_key = session_key)
+        except:
+            return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
         sim_key = key_increment("similarity_score",**pipeline)
 
         #update the sim key and reload the dictionary
         kwargs = {sim_key : header}
-        pipeline_obj.update_property_datastore(**kwargs)
+        try:
+            pipeline_obj.update_property_datastore(**kwargs)
+        except:
+            return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
 
         #generate correct norm key
         norm_key = sub_key_gen("normalise", "similarity_score", **pipeline)
         kwargs2 = {norm_key : norm}
-        pipeline_obj.update_property_datastore(**kwargs2)
+        try:
+            pipeline_obj.update_property_datastore(**kwargs2)
+        except:
+            return redirect( url_for('access_denied') )
 
         if request.form["what_smiles"] == "single_smiles":
             return render_template('text_entry.html')
@@ -182,11 +197,17 @@ def create_app():
 
         SMILES = request.form["Smiles"]
         session_key = request.cookies.get('session_key')
-        pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+        try:
+            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+        except:
+            return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
         new_entry = sub_key_gen("single_smiles", "similarity_score", **pipeline)
         kwargs = {new_entry : SMILES}
-        pipeline_obj.update_property_datastore(**kwargs)
+        try:
+            pipeline_obj.update_property_datastore(**kwargs)
+        except:
+            return redirect( url_for('access_denied') )
         #pipeline keys so far ["source_key", "similarity_score", "normalise_scores", "single_smiles"]
 
         return redirect(url_for('main'))
@@ -196,11 +217,17 @@ def create_app():
 
         ref_data_key = request.form["dataset_choice"]
         session_key = request.cookies.get('session_key')
-        pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+        try:
+            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+        except:
+            return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
         new_entry = sub_key_gen("dataframe_smiles_ref", "similarity_score", **pipeline)
         kwargs = {new_entry : ref_data_key}
-        pipeline_obj.update_property_datastore(**kwargs)
+        try:
+            pipeline_obj.update_property_datastore(**kwargs)
+        except:
+            return redirect( url_for('access_denied') )
         #pipeline keys so far ["source_key", "similarity_score", "normalise_scores", "dataframe_smiles"]
         dataset = load_data(ref_data_key)
         headers = dataset[ref_data_key].headers
@@ -210,18 +237,27 @@ def create_app():
     def similarity_score_page_dataframe_2():
         ref_column = request.form["column_choice"]
         session_key = request.cookies.get('session_key')
-        pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+        try:
+            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+        except:
+            return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
         new_entry = sub_key_gen("dataframe_smiles_col", "similarity_score", **pipeline)
         kwargs = {new_entry : ref_column}
-        pipeline_obj.update_property_datastore(**kwargs )
+        try:
+            pipeline_obj.update_property_datastore(**kwargs)
+        except:
+            return redirect( url_for('access_denied') )
         #pipeline keys so far ["source_key", "similarity_score", "normalise_scores", "dataframe_smiles", "dataframe_smiles_col"]
         return redirect(url_for('main'))
 
     @app.route('/do-things/')
     def generate_results():
         session_key = request.cookies.get('session_key')
-        pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+        try:
+            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+        except:
+            return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
         return render_template("run_pipeline.html", Pipeline = pipeline)
 
@@ -229,8 +265,14 @@ def create_app():
     def generate_results_2():
 
         session_key = request.cookies.get('session_key')
-        pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
-        result = pipeline_obj.run_pipeline()
+        try:
+            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+        except:
+            return redirect( url_for('access_denied') )
+        try:
+            result = pipeline_obj.run_datastore_pipeline(session_key = session_key)
+        except:
+            return redirect( url_for('access_denied') )
 
         return render_template('results_page.html', Results = Markup(result.dataframe.to_html()))
 
