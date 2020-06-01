@@ -12,5 +12,6 @@ Please type your choice exactly :
 
 <form action = "{{ url_for('similarity_score_page_dataframe')}}" name = "dataset list" method = "POST">
   <input name="dataset_choice">
+  <input name="tokenField" type="hidden" value = "{{csrf_token}}" />
   <input type="submit">
 </form>

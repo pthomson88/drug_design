@@ -18,6 +18,16 @@ def create_app():
 
     app = Flask(__name__)
 
+    #Some silent function to fetch a csrf token from drug_design_backend
+    #This needs to be required by the backend and included in every requests
+    #We should call this function at the start of every view
+    def csrf_token():
+        url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/token'
+        r = requests.get(url)
+        response = r.json()
+        token = response['csrf_token']
+        return token
+
     def get_session_key(user_id):
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + user_id
         try:
@@ -46,7 +56,7 @@ def create_app():
         return render_template('access_denied.html')
 
     #The main function to take you through option
-    @app.route("/index/", methods=['GET','POST'])
+    @app.route("/index/", methods=['GET'])
     def main():
         msg = "Welcome to the main page"
         a = "hello world"
@@ -94,11 +104,17 @@ def create_app():
 
     @app.route('/example-load-data/')
     def example_load_data_form():
-        return render_template('my-form.html', variable = '12345', variable2 = 'next_variable')
+        token = csrf_token()
+        return render_template('my-form.html', variable = '12345', variable2 = 'next_variable', csrf_token = token)
 
     #A Page for loading data example
     @app.route('/example-load-data/', methods=['POST'])
     def example_load_data_post():
+        token = csrf_token()
+        try:
+            assert request.form['tokenField'] == token
+        except:
+            abort(403)
         text = request.form['text']
         text2 = request.form['text2']
         processed_text = text.upper() + text2.upper()
@@ -110,10 +126,16 @@ def create_app():
     @app.route('/load-data/')
     def load_data_form():
         url_dict = load_obj('url_dict')
-        return render_template('load_data_form.html', Datafiles = url_dict)
+        token = csrf_token()
+        return render_template('load_data_form.html', Datafiles = url_dict, csrf_token = token)
 
     @app.route('/load-data/', methods = ['POST'])
     def load_data_form_post():
+        token = csrf_token()
+        try:
+            assert request.form['tokenField'] == token
+        except:
+            abort(403)
         key = request.form['dataset_choice']
         clear = request.form.get('clear_pipe')
 
@@ -135,10 +157,11 @@ def create_app():
         return redirect( url_for('main') )
 
 
-    @app.route('/sim-score/', methods=['GET','POST'])
+    @app.route('/sim-score/', methods=['GET'])
     def sim_score_start():
         #We need to load the data to show the headers
         #You don't get to start a session from here
+        token = csrf_token()
         session_key = request.cookies.get('session_key')
         try:
             pipeline = DataStorePipeLine(True,user_id = 'test', session_key = session_key)
@@ -147,11 +170,16 @@ def create_app():
         ds_key = pipeline.source_key
         loaded_data = load_data(ds_key)
         headers = loaded_data[ds_key].headers
-        return render_template('choose_column_form.html', Columns = headers)
+        return render_template('choose_column_form.html', Columns = headers, csrf_token = token)
 
     #Similarity score
-    @app.route('/sim-score/reference_smiles', methods=['GET','POST'])
+    @app.route('/sim-score/', methods=['POST'])
     def similarity_score_page():
+        token = csrf_token()
+        try:
+            assert request.form['tokenField'] == token
+        except:
+            abort(403)
         norm = False
         header = request.form['column_choice']
         try:
@@ -185,16 +213,20 @@ def create_app():
             return redirect( url_for('access_denied') )
 
         if request.form["what_smiles"] == "single_smiles":
-            return render_template('text_entry.html')
+            return render_template('text_entry.html', csrf_token = token)
 
         elif request.form["what_smiles"] == "dataframe_smiles":
             url_dict = load_obj('url_dict')
-            return render_template('ref_data_form.html', Datafile = url_dict)
+            return render_template('ref_data_form.html', Datafile = url_dict, csrf_token = token)
 
 
-    @app.route('/do-things/sim-smiles/single/', methods=['GET','POST'])
+    @app.route('/sim-score/single/', methods=['POST'])
     def similarity_score_page_single():
-
+        token = csrf_token()
+        try:
+            assert request.form['tokenField'] == token
+        except:
+            abort(403)
         SMILES = request.form["Smiles"]
         session_key = request.cookies.get('session_key')
         try:
@@ -212,9 +244,13 @@ def create_app():
 
         return redirect(url_for('main'))
 
-    @app.route('/do-things/sim-smiles/ref_dataframe/', methods=['GET','POST'])
+    @app.route('/sim-score/dataframe/', methods=['POST'])
     def similarity_score_page_dataframe():
-
+        token = csrf_token()
+        try:
+            assert request.form['tokenField'] == token
+        except:
+            abort(403)
         ref_data_key = request.form["dataset_choice"]
         session_key = request.cookies.get('session_key')
         try:
@@ -231,10 +267,15 @@ def create_app():
         #pipeline keys so far ["source_key", "similarity_score", "normalise_scores", "dataframe_smiles"]
         dataset = load_data(ref_data_key)
         headers = dataset[ref_data_key].headers
-        return render_template('ref_column_form.html', Columns = headers )
+        return render_template('ref_column_form.html', Columns = headers, csrf_token = token )
 
-    @app.route('/do-things/sim-smiles/ref_dataframe_cols/', methods=['GET','POST'])
+    @app.route('/sim-score/dataframe/ref_cols/', methods=['POST'])
     def similarity_score_page_dataframe_2():
+        token = csrf_token()
+        try:
+            assert request.form['tokenField'] == token
+        except:
+            abort(403)
         ref_column = request.form["column_choice"]
         session_key = request.cookies.get('session_key')
         try:
@@ -251,7 +292,7 @@ def create_app():
         #pipeline keys so far ["source_key", "similarity_score", "normalise_scores", "dataframe_smiles", "dataframe_smiles_col"]
         return redirect(url_for('main'))
 
-    @app.route('/do-things/')
+    @app.route('/do-things/', methods = ['GET'])
     def generate_results():
         session_key = request.cookies.get('session_key')
         try:
