@@ -119,12 +119,16 @@ class DataStorePipeLine(PipeLine):
         return update
 
     def run_datastore_pipeline(self, **kwargs):
-        #this is an empty put request to check if a valid session key is used
+        #apply a 4 hour lock to the session to protect the users run
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
+        kwargs['lock'] = 240
         r = requests.put(url, json=kwargs)
         #If the session key is good then run the pipeline otherwise raise an exception
         if r.status_code == 201:
             result = super().run_pipeline()
+            #Make the session dormant automatically after running a pipeline
+            kwargs['lock'] = False
+            r = requests.put(url, json=kwargs)
             return result
         else:
             raise Exception(r.status_code)
