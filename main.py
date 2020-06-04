@@ -8,6 +8,7 @@ from drug_design.datasets.DataSets import DataSet
 from drug_design.save_load import load_obj, save_obj
 from drug_design.key_increment import key_increment, get_shifted_key, sub_key_gen
 from drug_design.DataStorePipeLine import DataStorePipeLine
+from drug_design.UrlDict import UrlDict
 import settings
 import pandas as pd
 
@@ -156,6 +157,35 @@ def create_app():
 
         return redirect( url_for('main') )
 
+    @app.route('/manage-data/', methods=['GET'])
+    def data_management():
+        #We need to load the data to show the headers
+        #You don't get to start a session from here
+        token = csrf_token()
+        session_key = request.cookies.get('session_key')
+
+        url_dict = UrlDict(name = "url_dict")
+
+        return render_template('manage_datasets.html', urldict = url_dict.dictionary)
+
+        @app.route('/manage-data/', methods=['POST'])
+        def data_management_do():
+            #We need to load the data to show the headers
+            #You don't get to start a session from here
+            token = csrf_token()
+            try:
+                assert request.form['tokenField'] == token
+            except:
+                abort(403)
+            session_key = request.cookies.get('session_key')
+
+            id = request.form['id']
+            url_key = request.form['url_key']
+
+            url_dict = UrlDict(name = "url_dict")
+            url_dict.add_gsheet_url(url_key, id)
+
+            return redirect( url_for('main') )
 
     @app.route('/sim-score/', methods=['GET'])
     def sim_score_start():

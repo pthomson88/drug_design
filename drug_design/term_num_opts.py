@@ -1,5 +1,4 @@
 
-
 def selector(options,*messages):
     rego = 'y'
     while rego.lower() == "y":

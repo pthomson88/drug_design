@@ -1,0 +1,27 @@
+<p><a href="{{ url_for('main') }}">Return to main page</a></p>
+
+<h2>
+Available dataset links:
+</h2>
+
+{%for key in urldict %}
+  <p>{{ key }} : {{urldict[key]}}</p>
+{%endfor%}
+<br>
+<p>
+Here you can add a new dataset by providing a google sheet id.
+Currently only google sheets are supported, they also need to be set to sharing so that this software can acess them.
+Deleting a dataset through the web isn't supported at the moment. However it is possible via the terminal application.
+</p>
+<br>
+<p>You can find your google id for a sheet in the address bar showing the link to it:</p>
+<img src="/static/images/gsheet_id.png" width="1000"/>
+
+<form method="POST">
+    <p>What is the Google id?</p>
+    <input name="id">
+    <p>What should the dataset be caled?</p>
+    <input name="url_key">
+    <input name="tokenField" type="hidden" value = "{{csrf_token}}" />
+    <input type="submit">
+</form>
