@@ -126,9 +126,9 @@ def create_app():
     #Load data
     @app.route('/load-data/')
     def load_data_form():
-        url_dict = load_obj('url_dict')
+        url_dict = UrlDict(name = "url_dict")
         token = csrf_token()
-        return render_template('load_data_form.html', Datafiles = url_dict, csrf_token = token)
+        return render_template('load_data_form.html', Datafiles = url_dict.dictionary, csrf_token = token)
 
     @app.route('/load-data/', methods = ['POST'])
     def load_data_form_post():
@@ -198,7 +198,8 @@ def create_app():
         except:
             return redirect( url_for('access_denied') )
         ds_key = pipeline.source_key
-        loaded_data = load_data(ds_key)
+        #data is only loaded for the headers - even 1 chunk is wasteful
+        loaded_data = load_data(ds_key, chunk_limit = 1)
         headers = loaded_data[ds_key].headers
         return render_template('choose_column_form.html', Columns = headers, csrf_token = token)
 
@@ -246,8 +247,8 @@ def create_app():
             return render_template('text_entry.html', csrf_token = token)
 
         elif request.form["what_smiles"] == "dataframe_smiles":
-            url_dict = load_obj('url_dict')
-            return render_template('ref_data_form.html', Datafile = url_dict, csrf_token = token)
+            url_dict = UrlDict(name = "url_dict")
+            return render_template('ref_data_form.html', Datafile = url_dict.dictionary, csrf_token = token)
 
 
     @app.route('/sim-score/single/', methods=['POST'])
@@ -295,7 +296,8 @@ def create_app():
         except:
             return redirect( url_for('access_denied') )
         #pipeline keys so far ["source_key", "similarity_score", "normalise_scores", "dataframe_smiles"]
-        dataset = load_data(ref_data_key)
+        #data is only loaded for headers - even 1 chunk is wasteful
+        dataset = load_data(ref_data_key, chunk_limit = 1)
         headers = dataset[ref_data_key].headers
         return render_template('ref_column_form.html', Columns = headers, csrf_token = token )
 
@@ -341,7 +343,7 @@ def create_app():
         except:
             return redirect( url_for('access_denied') )
         try:
-            result = pipeline_obj.run_datastore_pipeline(session_key = session_key)
+            result = pipeline_obj.run_datastore_pipeline(session_key = session_key, chunk_limit = settings.CHUNK_LIMIT)
         except:
             return redirect( url_for('access_denied') )
 

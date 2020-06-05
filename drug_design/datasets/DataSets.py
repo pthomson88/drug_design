@@ -10,7 +10,7 @@ class DataSet(object):
     """A class for dataset objects ."""
 
     #initialises the object from a drive url and returns the resulting dataframe
-    def __init__(self, drive_url):
+    def __init__(self, drive_url, **kwargs):
 
         try:
             csv_file = urllib.request.urlopen(drive_url)
@@ -20,11 +20,18 @@ class DataSet(object):
         #the dataframe is read in chunks of 100 rows at a time and the headers are read
         chunks = pd.read_csv(csv_file, error_bad_lines=False, chunksize = 100)
 
-        self.chunks = [chunk for chunk in chunks]
+        self.chunks = [ chunk for chunk in chunks ]
+        m = self.how_many_chunks()
+
+        if 'chunk_limit' in kwargs:
+            m = self.how_many_chunks()
+            p = int(kwargs['chunk_limit'])
+            chunk_lim = min(m, p)
+            self.chunks = [ self.chunks[n] for n in range(chunk_lim) ]
 
         self.dataframe = self.stitch_chunks()
 
-        self.headers = [c for c in self.dataframe]
+        self.headers = [ c for c in self.dataframe ]
 
     def how_many_chunks(self):
         return len(self.chunks)
@@ -32,6 +39,7 @@ class DataSet(object):
     def stitch_chunks(self):
         dfList = [ df for df in self.chunks ]
         self.dataframe = pd.concat(dfList,sort=False)
+
         return self.dataframe
 
 

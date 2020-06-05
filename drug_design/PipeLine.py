@@ -4,6 +4,7 @@ from .save_load import load_obj, save_obj
 from .load_data import load_data
 from .similarity import run_similarity
 from .key_increment import sub_key_gen
+from .UrlDict import UrlDict
 
 #Class definition of a pipeline
 class PipeLine(object):
@@ -26,11 +27,11 @@ class PipeLine(object):
             del self.dictionary[key]
 
     #a pipeline can be run
-    def run_pipeline(self):
+    def run_pipeline(self, **kwargs):
 
         pipeline = self.dictionary
         ds_key = self.source_key
-        dataset = load_data(ds_key)
+        dataset = load_data(ds_key, **kwargs)
 
         #A dict of all properties mentioning similarity score
         all_sim_pipe = {key:pipeline[key] for key in pipeline if "similarity_score" in key}
@@ -67,7 +68,7 @@ class PipeLine(object):
                     #pass in the reference df as its DataSet object
                     mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column, norm] }
 
-                    dataset[ds_key].chunks = [ run_similarity(df,header,**mol_reference) for df in dataset[ds_key].chunks]
+                    dataset[ds_key].chunks = [ run_similarity(df,header,**mol_reference) for df in dataset[ds_key].chunks ]
                     dataset[ds_key].stitch_chunks()
 
         return dataset[ds_key]
