@@ -17,7 +17,7 @@ Deleting a dataset through the web isn't supported at the moment. However it is 
 <p>You can find your google id for a sheet in the address bar showing the link to it:</p>
 <img src="/static/images/gsheet_id.png" width="1000"/>
 
-<form method="POST">
+<form action = "{{ url_for('data_management_do')}}" method="POST">
     <p>What is the Google id?</p>
     <input name="id">
     <p>What should the dataset be caled?</p>

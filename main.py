@@ -166,26 +166,26 @@ def create_app():
 
         url_dict = UrlDict(name = "url_dict")
 
-        return render_template('manage_datasets.html', urldict = url_dict.dictionary)
+        return render_template('manage_datasets.html', urldict = url_dict.dictionary, csrf_token = token)
 
-        @app.route('/manage-data/', methods=['POST'])
-        def data_management_do():
-            #We need to load the data to show the headers
-            #You don't get to start a session from here
-            token = csrf_token()
-            try:
-                assert request.form['tokenField'] == token
-            except:
-                abort(403)
-            session_key = request.cookies.get('session_key')
+    @app.route('/manage-data/', methods=['POST'])
+    def data_management_do():
+        #We need to load the data to show the headers
+        #You don't get to start a session from here
+        token = csrf_token()
+        try:
+            assert request.form['tokenField'] == token
+        except:
+            abort(403)
+        session_key = request.cookies.get('session_key')
 
-            id = request.form['id']
-            url_key = request.form['url_key']
+        id = request.form['id']
+        url_key = request.form['url_key']
 
-            url_dict = UrlDict(name = "url_dict")
-            url_dict.add_gsheet_url(url_key, id)
+        url_dict = UrlDict(name = "url_dict")
+        url_dict.add_gsheet_url(url_key, id)
 
-            return redirect( url_for('main') )
+        return redirect( url_for('data_management') )
 
     @app.route('/sim-score/', methods=['GET'])
     def sim_score_start():
