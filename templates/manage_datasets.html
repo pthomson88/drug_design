@@ -1,27 +1,52 @@
 <p><a href="{{ url_for('main') }}">Return to main page</a></p>
 
-<h2>
-Available dataset links:
-</h2>
+<h1>
+  Manage datasets
+</h1>
 
-{%for key in urldict %}
-  <p>{{ key }} : {{urldict[key]}}</p>
-{%endfor%}
-<br>
 <p>
-Here you can add a new dataset by providing a google sheet id.
-Currently only google sheets are supported, they also need to be set to sharing so that this software can acess them.
-Deleting a dataset through the web isn't supported at the moment. However it is possible via the terminal application.
+  Here you can upload and remove datasets.
+  To remove one select the "Delete dataset" checkbox and press submit,
+  you can remove multiple datasets at once.
+  To add a new dataset you will need to provide a google id and a name for the dataset
 </p>
-<br>
-<p>You can find your google id for a sheet in the address bar showing the link to it:</p>
+
+<p>
+  <b>BEWARE!!! Changes here are applied for all users.
+  Don't delete something unless you really want it gone.
+  Likewise only add datasets you are willing to share</b>
+  (you will need to set them to be sharable on your Google drive anyway to use them here)
+</p>
+<p>
+  You can find your google id for a sheet in the address bar showing the link to it:
+</p>
 <img src="/static/images/gsheet_id.png" width="1000"/>
 
 <form action = "{{ url_for('data_management_do')}}" method="POST">
     <p>What is the Google id?</p>
     <input name="id">
-    <p>What should the dataset be caled?</p>
+    <p>What should the dataset be called?</p>
     <input name="url_key">
     <input name="tokenField" type="hidden" value = "{{csrf_token}}" />
-    <input type="submit">
+    <br>
+    <br>
+    <input type="submit" name = "add_submit">
+    <label for="add_submit"><b>Click here to add your dataset</b></label>
+</form>
+
+<h2>
+Current dataset links:
+</h2>
+<form action = "{{ url_for('data_management_do')}}" method="POST">
+    <table>
+      {%for key in urldict %}
+        <tr><td style="width:250px">  {{ key }} : </td> <td>  {{urldict[key]}} </td>
+        <td><input type = "checkbox" name="delete_{{key}}" value = "{{key}}">
+        <label for="delete_{{key}}">Delete dataset</label><td></tr>
+      {%endfor%}
+    </table>
+    <input name="tokenField" type="hidden" value = "{{csrf_token}}" />
+    <br>
+    <input type="submit" name="delete_submit">
+    <label for="delete_submit"><b>BEWARE!!! Clicking here will delete every dataset selected for deletion.</b></label>
 </form>

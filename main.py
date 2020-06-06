@@ -179,11 +179,21 @@ def create_app():
             abort(403)
         session_key = request.cookies.get('session_key')
 
-        id = request.form['id']
-        url_key = request.form['url_key']
-
+        #load the url_dict
         url_dict = UrlDict(name = "url_dict")
-        url_dict.add_gsheet_url(url_key, id)
+
+        #check if anything should be deleted
+        [
+            url_dict.delete_dataset(request.form[key])
+            for key in request.form
+            if request.form[key] in url_dict.dictionary
+        ]
+
+        #check if anything should be added
+        if "url_key" in request.form and "id" in request.form:
+            id = request.form['id']
+            url_key = request.form['url_key']
+            url_dict.add_gsheet_url(url_key, id)
 
         return redirect( url_for('data_management') )
 

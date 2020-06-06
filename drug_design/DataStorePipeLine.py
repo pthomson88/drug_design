@@ -45,6 +45,7 @@ class DataStorePipeLine(PipeLine):
             if not key == 'created'
             if not key == 'user_id'
             if not key == 'session_key'
+            if not key == 'lock'
         }
         self.source_key = self.dictionary['source_key']
 
@@ -115,6 +116,7 @@ class DataStorePipeLine(PipeLine):
             if not key == 'created'
             if not key == 'user_id'
             if not key == 'session_key'
+            if not key == 'lock'
         }
         return update
 
