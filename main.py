@@ -128,7 +128,7 @@ def create_app():
     def load_data_form():
         url_dict = UrlDict(name = "url_dict")
         token = csrf_token()
-        return render_template('load_data_form.html', Datafiles = url_dict.dictionary, csrf_token = token)
+        return render_template('load_data_form.html', Datafiles = url_dict.webdictionary, csrf_token = token)
 
     @app.route('/load-data/', methods = ['POST'])
     def load_data_form_post():
@@ -166,7 +166,7 @@ def create_app():
 
         url_dict = UrlDict(name = "url_dict")
 
-        return render_template('manage_datasets.html', urldict = url_dict.dictionary, csrf_token = token)
+        return render_template('manage_datasets.html', urldict = url_dict.webdictionary, csrf_token = token)
 
     @app.route('/manage-data/', methods=['POST'])
     def data_management_do():
@@ -186,7 +186,7 @@ def create_app():
         [
             url_dict.delete_dataset(request.form[key])
             for key in request.form
-            if request.form[key] in url_dict.dictionary
+            if request.form[key] in url_dict.webdictionary
         ]
 
         #check if anything should be added
