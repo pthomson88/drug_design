@@ -18,10 +18,12 @@ def run_similarity(dataframe,column_key,**kwargs):
                 if isinstance(kwargs[key][0], (str, int)):
                     SMILES = str(kwargs[key][0])
                     norm = kwargs[key][1]
+                    score_col = 'sim_score_' + SMILES
                     if norm == True:
-                        dataframe['sim_score_' + SMILES] = dataframe[column_key].apply(levenshtein_norm, args = (SMILES,))
+                        dataframe[score_col] = dataframe[column_key].apply(levenshtein_norm, args = (SMILES,))
                     else:
-                        dataframe['sim_score_' + SMILES] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
+                        dataframe[score_col] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
+                    dataframe = dataframe.sort_values(by=[score_col])
                     return dataframe
                 #The dataframe will be as its dataset object so we need to look at the dataframe parameter
                 elif isinstance(kwargs[key][0].dataframe, pd.DataFrame):
@@ -36,11 +38,13 @@ def run_similarity(dataframe,column_key,**kwargs):
 
                         #We need to apply the lev_aggregator function this time and unpack the result into new columns
                         dataframe['new'] = dataframe[column_key].apply(lev_aggregator, args = (df2_dataset,ref_column,norm,))
+                        score_col = 'sim_score_' + str(key) +"_"+ str(ref_column)
                         try:
-                            dataframe['sim_match_' + str(key) +"_"+ str(ref_column)], dataframe['sim_score_' + str(key) +"_"+ str(ref_column)] = dataframe.new.str
+                            dataframe['sim_match_' + str(key) +"_"+ str(ref_column)], dataframe[sort_col] = dataframe.new.str
                         except FutureWarning:
                             print("Ignoring FutureWarning...")
                         dataframe = dataframe.drop(columns=['new'])
+                        dataframe = dataframe.sort_values(by=[score_col])
 
                         return dataframe
 

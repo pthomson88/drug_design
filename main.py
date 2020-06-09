@@ -258,7 +258,7 @@ def create_app():
 
         elif request.form["what_smiles"] == "dataframe_smiles":
             url_dict = UrlDict(name = "url_dict")
-            return render_template('ref_data_form.html', Datafile = url_dict.dictionary, csrf_token = token)
+            return render_template('ref_data_form.html', Datafile = url_dict.webdictionary, csrf_token = token)
 
 
     @app.route('/sim-score/single/', methods=['POST'])
