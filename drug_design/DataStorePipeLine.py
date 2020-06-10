@@ -24,7 +24,7 @@ class DataStorePipeLine(PipeLine):
         #the pipeline will always be returned if there is an active session
         #the session_key will be hiden by place
         #404 is returned for a dormant session
-        r = requests.get(url)
+        r = requests.get(url, verify = settings.VERIFY_SSL)
         if r.status_code >= 400:
             raise Exception(r.status_code)
         else:
@@ -58,7 +58,7 @@ class DataStorePipeLine(PipeLine):
         self.user_id = kwargs['user_id']
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + self.user_id
 
-        response = requests.get(url).json()
+        response = requests.get(url, verify = settings.VERIFY_SSL).json()
         self.session_key = response['session_key']
         self.source_key = ""
 
@@ -76,7 +76,7 @@ class DataStorePipeLine(PipeLine):
 
         #finally we can send the data and use the response to create the pipeline_entity property
         #we check that a positive respone is returned and if not we return the error status_code
-        r = requests.post(url,json=pre_pipeline_entity)
+        r = requests.post(url,json=pre_pipeline_entity, verify = settings.VERIFY_SSL)
         if r.status_code == 201:
             response = r.json()
             self.pipeline_entity = response['pipeline_entity']
@@ -92,7 +92,7 @@ class DataStorePipeLine(PipeLine):
             super().update_property(**update)
             #the datastore can be updated with everything
             url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
-            r = requests.put(url,json=kwargs)
+            r = requests.put(url,json=kwargs, verify = settings.VERIFY_SSL)
             #checking the update has been received and if not aborting with the status_code
             if r.status_code == 201:
                 response = r.json()
@@ -105,7 +105,7 @@ class DataStorePipeLine(PipeLine):
         super().delete_property(**update)
         #deletes the same property from the pipeline entity
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id + '/delete_properties'
-        r = requests.put(url,json=kwargs)
+        r = requests.put(url,json=kwargs, verify = settings.VERIFY_SSL)
         response = r.json()
         self.pipeline_entity = response['pipeline_entity']
 
@@ -128,13 +128,13 @@ class DataStorePipeLine(PipeLine):
         #apply a 4 hour lock to the session to protect the users run
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
         kwargs['lock'] = 240
-        r = requests.put(url, json=kwargs)
+        r = requests.put(url, json=kwargs, verify = settings.VERIFY_SSL)
         #If the session key is good then run the pipeline otherwise raise an exception
         if r.status_code == 201:
             result = super().run_pipeline( chunk_limit = chunk_lim )
             #Make the session dormant automatically after running a pipeline
             kwargs['lock'] = False
-            r = requests.put(url, json=kwargs)
+            r = requests.put(url, json=kwargs, verify = settings.VERIFY_SSL)
             return result
         else:
             raise Exception(r.status_code)

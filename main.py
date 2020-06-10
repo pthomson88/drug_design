@@ -24,7 +24,7 @@ def create_app():
     #We should call this function at the start of every view
     def csrf_token():
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/token'
-        r = requests.get(url)
+        r = requests.get(url, verify = settings.VERIFY_SSL)
         response = r.json()
         token = response['csrf_token']
         return token
@@ -32,7 +32,7 @@ def create_app():
     def get_session_key(user_id):
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + user_id
         try:
-            r = requests.get(url)
+            r = requests.get(url, verify = settings.VERIFY_SSL)
             response = r.json()
             #saving the session_key to the pip
             session_key =  response['session_key']
