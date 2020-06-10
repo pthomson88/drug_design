@@ -13,7 +13,6 @@ import settings
 import pandas as pd
 
 from flask import Flask, jsonify, request, render_template, redirect, url_for, Markup, make_response, abort
-from wtforms import Form, BooleanField, StringField, validators
 
 def create_app():
 
@@ -360,6 +359,9 @@ def create_app():
         return render_template('results_page.html', Results = Markup(result.dataframe.to_html()))
 
     return app
+
+#for some reason this needs to be here for app engine to work - it doesn't affect running locally
+app = create_app()
 
 if __name__ == '__main__':
     app = create_app()

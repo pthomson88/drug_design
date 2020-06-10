@@ -1,5 +1,4 @@
 Flask==1.1.2
-google-cloud-datastore==1.12.0
 pandas==1.0.3
 numpy==1.18.1
 DateTime==4.3
