@@ -30,14 +30,12 @@ def create_app():
 
     def get_session_key(user_id):
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + user_id
-        try:
-            r = requests.get(url, verify = settings.VERIFY_SSL)
-            response = r.json()
-            #saving the session_key to the pip
-            session_key =  response['session_key']
-            return session_key
-        except:
-            raise Exception("Something went wrong - maybe a session is already active for this user")
+        r = requests.get(url, verify = settings.VERIFY_SSL)
+        if r.status_code == 403:
+            raise Exception(r.status_code)
+        response = r.json()
+        session_key =  response['session_key']
+        return session_key
 
     def set_session_cookie(user_id, response_contents, **kwargs):
         #only try to get a session yey if you have to
@@ -61,14 +59,15 @@ def create_app():
         msg = "Welcome to the main page"
         a = "hello world"
 
-        #only test for now
-        user_id = 'test'
+        #begin with the user_id as the first option - it doesn't really matter at this stage
+        user_id = settings.ALLOWLIST[0]
         #Check if there is a cookie
         try:
             cookie_session_key = request.cookies.get('session_key')
+            cookie_user_id = request.cookies.get('user_id')
         finally:
             #if there is a cookie
-            if not cookie_session_key == None:
+            if not cookie_session_key == None and not cookie_user_id == None:
                 try:
                     #if there is an existing pipeline this should not attempt the update as no extra kwargs are passed
                     pipeline = DataStorePipeLine(True, user_id = user_id,session_key = cookie_session_key)
@@ -76,7 +75,11 @@ def create_app():
                     #if something goes wrong it's most likely the session is dormant so try and start a fresh one
                     b = "Your last session went dormant - but don't worrry we've started a new one for you"
                     pre_response = render_template('welcome_options.html', var1 = msg, var2 = b)
-                    cookied_session = set_session_cookie(user_id, pre_response)
+                    #If the cookied session fails then theres a good chance the session is occupoed
+                    try:
+                        cookied_session = set_session_cookie(user_id, pre_response)
+                    except:
+                        return redirect( url_for('access_denied') )
                     response = cookied_session['response']
                     return response
 
@@ -89,10 +92,21 @@ def create_app():
 
             #aka there is no cookie to match against session_keys
             else:
-                try:
-                    pipeline = DataStorePipeLine(False, user_id = user_id)
-                except:
-                    return redirect( url_for('access_denied') )
+                #all this is to iterate through available user_id's and find one that is free
+                max = len(settings.ALLOWLIST)
+                end = settings.ALLOWLIST[max-1]
+                for item in settings.ALLOWLIST:
+                    user_id = item
+                    try:
+                        pipeline = DataStorePipeLine(False, user_id = user_id)
+                    except ValueError:
+                        if user_id == end:
+                            return redirect( url_for('access_denied') )
+                        else:
+                            pass
+                    if not pipeline == None:
+                        break
+
                 #a new cookie needs saved - creating a new pipeline will generate a new key in the pipeline
                 session_key = pipeline.session_key
                 b = "Before we get started you're going to need to load some data."

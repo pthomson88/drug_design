@@ -5,8 +5,8 @@ BE_URL_PREFIX = 'https://drug-design-backend.nw.r.appspot.com'
 #Set this to False to be able to run locally whilst it's having problems
 VERIFY_SSL = False
 
-#matches those whitelisted on backend - ideally this would be from an endpoint
-WHITELIST = ['test','hydrogen','oxygen','carbon','nitrogen','sulfur', 'phosphorus' ]
+#matches those allowlisted on backend - ideally this would be from an endpoint
+ALLOWLIST = ['hydrogen','oxygen','carbon','nitrogen','calcium', 'phosphorus' ,'potassium', 'sulfur','sodium','chlorine','magnesium','iron','copper','molybdenum','zinc','iodine']
 
 #for datasets chunks are 100 rows - so a limit of 1...
 # ... limits the size of datasets to the first 100 rows

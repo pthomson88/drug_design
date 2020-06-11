@@ -58,7 +58,12 @@ class DataStorePipeLine(PipeLine):
         self.user_id = kwargs['user_id']
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + self.user_id
 
-        response = requests.get(url, verify = settings.VERIFY_SSL).json()
+        r = requests.get(url, verify = settings.VERIFY_SSL)
+        if r.status_code == 403:
+            raise ValueError(r.status_code)
+        else:
+            response = r.json()
+
         self.session_key = response['session_key']
         self.source_key = ""
 
