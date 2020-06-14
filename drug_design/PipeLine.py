@@ -54,8 +54,10 @@ class PipeLine(object):
                 #are there any single smiles jobs
                 if "single_smiles" in sim_key:
                     mol_reference = {"SMILES" : [tmp_sim_pipe[sim_key],norm]}
-                    for chunk in dataset[ds_key].chunks:
-                        chunk = run_similarity(chunk,header,**mol_reference)
+                    dataset[ds_key].chunks = [
+                        run_similarity(chunk,header,**mol_reference)
+                        for chunk in dataset[ds_key].chunks
+                    ]
                     dataset[ds_key].stitch_chunks()
 
                 #look for dataframe smiles task next
@@ -68,8 +70,11 @@ class PipeLine(object):
                     ref_column = pipeline[col_key]
                     #pass in the reference df as its DataSet object
                     mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column, norm] }
-                    for chunk in dataset[ds_key].chunks:
-                        chunk = run_similarity(chunk,header,**mol_reference)
+
+                    dataset[ds_key].chunks = [
+                        run_similarity(chunk,header,**mol_reference)
+                        for chunk in dataset[ds_key].chunks
+                    ]
                     dataset[ds_key].stitch_chunks()
 
         return dataset[ds_key]

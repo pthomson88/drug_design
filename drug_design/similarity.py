@@ -42,17 +42,14 @@ def run_similarity(dataframe,column_key,**kwargs):
                         score_col = 'sim_score_' + str(key) +"_"+ str(ref_column)
                         try:
                             print("trying updates...")
-                            dataframe['sim_match_' + str(key) +"_"+ str(ref_column)], dataframe[sort_col] = dataframe.new.str
+                            dataframe['sim_match_' + str(key) +"_"+ str(ref_column)], dataframe[score_col] = dataframe.new.str
                         except FutureWarning:
                             print("Ignoring FutureWarning...")
                         except:
                             print("Ignoring some other exception...")
-                        finally:
-                            print("dropping the processing column...")
-                            dataframe = dataframe.drop(columns=['new'])
-                            print("SUCCESS!!!")
-                            print(dataframe)
-                            return dataframe
+                        dataframe = dataframe.drop(['new'],axis=1)
+                        print("SUCCESS!!!")
+                        return dataframe
 
                     else:
                         print("Error: I'm sorry I couldn't find that column in the reference dataframe you submitted")
