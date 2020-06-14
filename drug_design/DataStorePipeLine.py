@@ -22,7 +22,7 @@ class DataStorePipeLine(PipeLine):
         self.session_key = kwargs['session_key']
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id
         #the pipeline will always be returned if there is an active session
-        #the session_key will be hiden by place
+        #the session_key will be hiden by placeholder
         #404 is returned for a dormant session
         r = requests.get(url, verify = settings.VERIFY_SSL)
         if r.status_code >= 400:
@@ -142,4 +142,5 @@ class DataStorePipeLine(PipeLine):
             r = requests.put(url, json=kwargs, verify = settings.VERIFY_SSL)
             return result
         else:
+            print("exception: " + str(r.status_code))
             raise Exception(r.status_code)

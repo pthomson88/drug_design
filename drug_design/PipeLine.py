@@ -35,7 +35,7 @@ class PipeLine(object):
 
         #A dict of all properties mentioning similarity score
         all_sim_pipe = {key:pipeline[key] for key in pipeline if "similarity_score" in key}
-        #a dict of all properties not labelled ub mentioning similarity score
+        #a dict of all properties not labelled sub mentioning similarity score
         master_sim_pipe = {key:all_sim_pipe[key] for key in all_sim_pipe if not key[:3] == "sub" }
 
         #iterate through similarirt tasks
@@ -60,6 +60,7 @@ class PipeLine(object):
 
                 #look for dataframe smiles task next
                 if "dataframe_smiles_ref" in sim_key:
+                    print("running dataframe siliatiry...")
                     ref_key = pipeline[sim_key]
                     ref_dataset = load_data(ref_key)
                     #sub key gen can also be used to generate an existing key
@@ -67,8 +68,8 @@ class PipeLine(object):
                     ref_column = pipeline[col_key]
                     #pass in the reference df as its DataSet object
                     mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column, norm] }
-
-                    dataset[ds_key].chunks = [ run_similarity(df,header,**mol_reference) for df in dataset[ds_key].chunks ]
+                    for chunk in dataset[ds_key].chunks:
+                        chunk = run_similarity(chunk,header,**mol_reference)
                     dataset[ds_key].stitch_chunks()
 
         return dataset[ds_key]

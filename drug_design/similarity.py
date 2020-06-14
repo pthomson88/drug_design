@@ -23,7 +23,8 @@ def run_similarity(dataframe,column_key,**kwargs):
                         dataframe[score_col] = dataframe[column_key].apply(levenshtein_norm, args = (SMILES,))
                     else:
                         dataframe[score_col] = dataframe[column_key].apply(levenshtein, args = (SMILES,))
-                    dataframe = dataframe.sort_values(by=[score_col])
+                    print("SUCCESS!!!")
+                    print(dataframe)
                     return dataframe
                 #The dataframe will be as its dataset object so we need to look at the dataframe parameter
                 elif isinstance(kwargs[key][0].dataframe, pd.DataFrame):
@@ -40,13 +41,18 @@ def run_similarity(dataframe,column_key,**kwargs):
                         dataframe['new'] = dataframe[column_key].apply(lev_aggregator, args = (df2_dataset,ref_column,norm,))
                         score_col = 'sim_score_' + str(key) +"_"+ str(ref_column)
                         try:
+                            print("trying updates...")
                             dataframe['sim_match_' + str(key) +"_"+ str(ref_column)], dataframe[sort_col] = dataframe.new.str
                         except FutureWarning:
                             print("Ignoring FutureWarning...")
-                        dataframe = dataframe.drop(columns=['new'])
-                        dataframe = dataframe.sort_values(by=[score_col])
-
-                        return dataframe
+                        except:
+                            print("Ignoring some other exception...")
+                        finally:
+                            print("dropping the processing column...")
+                            dataframe = dataframe.drop(columns=['new'])
+                            print("SUCCESS!!!")
+                            print(dataframe)
+                            return dataframe
 
                     else:
                         print("Error: I'm sorry I couldn't find that column in the reference dataframe you submitted")
