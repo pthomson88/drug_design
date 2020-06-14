@@ -1,9 +1,9 @@
 
-BE_URL_PREFIX = 'https://drug-design-backend.nw.r.appspot.com'
+BE_URL_PREFIX = 'https://drug-design-backend.appspot.com'
 
 #It seems to take a while for requests to register a new SSL cert for appspot drug_design_backend
 #Set this to False to be able to run locally whilst it's having problems
-VERIFY_SSL = False
+VERIFY_SSL = True
 
 #matches those allowlisted on backend - ideally this would be from an endpoint
 ALLOWLIST = ['hydrogen','oxygen','carbon','nitrogen','calcium', 'phosphorus' ,'potassium', 'sulfur','sodium','chlorine','magnesium','iron','copper','molybdenum','zinc','iodine']

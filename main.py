@@ -49,6 +49,37 @@ def create_app():
         response.set_cookie('user_id', user_id)
         return {'session_key' : session_key, 'response' : response}
 
+    def selectuser_loadpipeline(*args,**kwargs):
+        max = len(settings.ALLOWLIST)
+        end = settings.ALLOWLIST[max-1]
+        pipeline = None
+        assert 'user_id' in kwargs
+        user_id = kwargs['user_id']
+        print("starting with " + str(user_id))
+        #first see if the pipeline loads with the passed user
+        try:
+            pipeline = DataStorePipeLine(*args, **kwargs)
+            return pipeline, user_id
+        except ValueError:
+            #if it doesn't work then try and find another dormant user_id
+            print("user_id " + user_id + " failed")
+            for item in settings.ALLOWLIST:
+                user_id = item
+                kwargs['user_id'] = user_id
+                print("... " + user_id)
+                try:
+                    pipeline = DataStorePipeLine(*args, **kwargs)
+                    return pipeline, user_id
+                except ValueError:
+                    print("user_id " + user_id + " failed")
+
+                if user_id == end:
+                    print("all user_id's failed")
+                    return False, settings.ALLOWLIST[0]
+                else:
+                    print("trying another user_id... " )
+
+
     @app.route("/access-restricted/", methods=['GET'])
     def access_denied():
         return render_template('access_denied.html')
@@ -64,13 +95,13 @@ def create_app():
         #Check if there is a cookie
         try:
             cookie_session_key = request.cookies.get('session_key')
-            cookie_user_id = request.cookies.get('user_id')
+            user_id = request.cookies.get('user_id')
         finally:
             #if there is a cookie
-            if not cookie_session_key == None and not cookie_user_id == None:
+            if not cookie_session_key == None and not user_id == None:
                 try:
                     #if there is an existing pipeline this should not attempt the update as no extra kwargs are passed
-                    pipeline = DataStorePipeLine(True, user_id = user_id,session_key = cookie_session_key)
+                    pipeline, user_id = selectuser_loadpipeline(True, user_id = user_id,session_key = cookie_session_key)
                 except:
                     #if something goes wrong it's most likely the session is dormant so try and start a fresh one
                     b = "Your last session went dormant - but don't worrry we've started a new one for you"
@@ -82,7 +113,8 @@ def create_app():
                         return redirect( url_for('access_denied') )
                     response = cookied_session['response']
                     return response
-
+                if pipeline == False:
+                    return redirect( url_for('access_denied') )
                 #succesful loading confirms this is a useful session_key
                 session_key = pipeline.session_key
                 #no need to save a new cookie
@@ -92,20 +124,13 @@ def create_app():
 
             #aka there is no cookie to match against session_keys
             else:
-                #all this is to iterate through available user_id's and find one that is free
-                max = len(settings.ALLOWLIST)
-                end = settings.ALLOWLIST[max-1]
-                for item in settings.ALLOWLIST:
-                    user_id = item
-                    try:
-                        pipeline = DataStorePipeLine(False, user_id = user_id)
-                    except ValueError:
-                        if user_id == end:
-                            return redirect( url_for('access_denied') )
-                        else:
-                            pass
-                    if not pipeline == None:
-                        break
+                #We don't know the user_id so we'll start with the first option
+                user_id = settings.ALLOWLIST[0]
+                #this is to iterate through available user_id's and find one that is free
+                pipeline, user_id = selectuser_loadpipeline(False, user_id = user_id)
+
+                if pipeline == False:
+                    return redirect( url_for('access_denied') )
 
                 #a new cookie needs saved - creating a new pipeline will generate a new key in the pipeline
                 session_key = pipeline.session_key
@@ -155,8 +180,9 @@ def create_app():
 
         # update the pipeline with the new source_key
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
         try:
-            pipeline_obj = DataStorePipeLine(True,user_id = 'test',source_key = key, session_key = session_key)
+            pipeline_obj = DataStorePipeLine(True,user_id = user_id, source_key = key, session_key = session_key)
         except:
             return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
@@ -176,6 +202,7 @@ def create_app():
         #You don't get to start a session from here
         token = csrf_token()
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
 
         url_dict = UrlDict(name = "url_dict")
 
@@ -191,6 +218,7 @@ def create_app():
         except:
             abort(403)
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
 
         #load the url_dict
         url_dict = UrlDict(name = "url_dict")
@@ -216,8 +244,9 @@ def create_app():
         #You don't get to start a session from here
         token = csrf_token()
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
         try:
-            pipeline = DataStorePipeLine(True,user_id = 'test', session_key = session_key)
+            pipeline = DataStorePipeLine(True,user_id = user_id, session_key = session_key)
         except:
             return redirect( url_for('access_denied') )
         ds_key = pipeline.source_key
@@ -243,8 +272,9 @@ def create_app():
         except:
             print('normalisation off')
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
         try:
-            pipeline_obj = DataStorePipeLine(True,user_id = 'test', session_key = session_key)
+            pipeline_obj = DataStorePipeLine(True,user_id = user_id, session_key = session_key)
         except:
             return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
@@ -283,8 +313,9 @@ def create_app():
             abort(403)
         SMILES = request.form["Smiles"]
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
         try:
-            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+            pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
             return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
@@ -307,8 +338,9 @@ def create_app():
             abort(403)
         ref_data_key = request.form["dataset_choice"]
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
         try:
-            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+            pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
             return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
@@ -333,8 +365,9 @@ def create_app():
             abort(403)
         ref_column = request.form["column_choice"]
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
         try:
-            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+            pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
             return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
@@ -350,8 +383,9 @@ def create_app():
     @app.route('/do-things/', methods = ['GET'])
     def generate_results():
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
         try:
-            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+            pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
             return redirect( url_for('access_denied') )
         pipeline = pipeline_obj.dictionary
@@ -361,8 +395,9 @@ def create_app():
     def generate_results_2():
 
         session_key = request.cookies.get('session_key')
+        user_id = request.cookies.get('user_id')
         try:
-            pipeline_obj = DataStorePipeLine(True, user_id = 'test', session_key = session_key)
+            pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
             return redirect( url_for('access_denied') )
         try:
