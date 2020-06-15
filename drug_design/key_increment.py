@@ -1,4 +1,4 @@
-#These three functions are involved in returning a unique key
+#These functions are involved in returning a unique key
 
 def sub_key_gen(new, parent_key_substring, **dictionary):
 
@@ -18,9 +18,8 @@ def sub_key_gen(new, parent_key_substring, **dictionary):
 
 #checks for a clash then if there is increments the integer at the end of the key until there is no clash
 def key_increment(key_substring, **dictionary):
-    clash = clash_check(key_substring, **dictionary)
     n = 100
-    new_key_string = update_key(key_substring, n)
+    clash = True
     while clash == True:
         new_key_string = update_key(key_substring, n)
         clash = clash_check(new_key_string, **dictionary)
