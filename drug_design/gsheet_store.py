@@ -1,16 +1,18 @@
 from .save_load import save_obj, load_obj
 from .UrlDict import UrlDict
+from .term_num_opts import selector
 
 def gsheet_store():
     cont = "y"
     while cont.lower() == "y":
-        action = input(" Would you like to:\n \n1. Link a new dataset by Google ID \n2. Un-link an existing dataset \n3. Go back \n\n:> ")
+        print("Would you like to...")
+        action = selector(["Link a new dataset by Google ID" , "Un-link an existing dataset" , "Go back"])
         print("")
 
-        url_dict_obj = UrlDict()
+        url_dict_obj = UrlDict(name = "url_dict")
         url_dict = url_dict_obj.dictionary
 
-        if action == "1":
+        if action == "Link a new dataset by Google ID":
 
             print("Current list of available datasets:")
             print("            ---------------------------------------------------------------")
@@ -39,20 +41,15 @@ def gsheet_store():
                 cont = input("Would you like to link another google sheets url? enter Y for yes or N for no :> ")
                 print("")
 
-        elif action =="2":
+        elif action =="Un-link an existing dataset":
 
-            print("Current list of available datasets:")
-
-            for key in url_dict:
-                print(key)
+            dataset_options = [ key for key in url_dict ]
 
             cont = 'Y'
             while cont.lower() == 'y':
-            #give the option to load more than one dataset at the start
-                print("")
 
-                key = input("Which dataset would you like to delete? :> ")
-                print("")
+                print("Your availble datasets are...")
+                key = selector( dataset_options , "Which dataset would you like to delete?" )
 
                 try:
                     url_dict_obj.delete_dataset(key)
@@ -67,7 +64,7 @@ def gsheet_store():
                 cont = input("\nWould you like to unlink another dataset? enter Y for yes or N for no :> ")
                 print("")
 
-        elif action =="3":
+        elif action =="Go back":
             cont = "n"
 
         else:

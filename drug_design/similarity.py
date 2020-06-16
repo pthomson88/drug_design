@@ -2,13 +2,15 @@
 #this approach was taken from: https://stackabuse.com/levenshtein-distance-and-text-similarity-in-python/
 import numpy as np
 import pandas as pd
+from pandarallel import pandarallel
 
 from multiprocessing import Pool, cpu_count
 
 #Take a dataframe with SMILES strings and one target SMILES then add a column of the scores
 def run_similarity(dataframe,column_key,**kwargs):
 
-#The first argument must be a dataframe
+    pandarallel.initialize()
+    #The first argument must be a dataframe
     if isinstance(dataframe, pd.DataFrame):
         #You need to put in a valid argument for a column header for the source dataframe
         if column_key in dataframe.columns:
@@ -38,7 +40,7 @@ def run_similarity(dataframe,column_key,**kwargs):
                         df2_dataset = kwargs[key][0]
 
                         #We need to apply the lev_aggregator function this time and unpack the result into new columns
-                        dataframe['new'] = dataframe[column_key].apply(lev_aggregator, args = (df2_dataset,ref_column,norm,))
+                        dataframe['new'] = dataframe[column_key].parallel_apply(lev_aggregator, args = (df2_dataset,ref_column,norm,))
                         score_col = 'sim_score_' + str(key) +"_"+ str(ref_column)
                         try:
                             print("trying updates...")

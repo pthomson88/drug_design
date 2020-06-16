@@ -1,4 +1,7 @@
 
+#takes a list of options as input which will be printed as a numerical list
+#Also optionally takes messages as input to be printed after the options but before input request
+#Ultimately the users choice is returned
 def selector(options,*messages):
     rego = 'y'
     while rego.lower() == "y":
@@ -15,6 +18,17 @@ def selector(options,*messages):
         choice = input( " :> ")
         if choice == "":
             return False
+
+        try:
+            i_choice = int(choice)
+            assert isinstance(i_choice, int)
+        except AssertionError:
+            print("\nError: Sorry, that's not a valid entry, please enter a number from the list")
+            rego = input("Would you like to try again? Type Y for yes or N for no :> ")
+            if rego.lower() == "y":
+                pass
+            else:
+                break
 
         print("")
         p=1

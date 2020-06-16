@@ -93,16 +93,16 @@ class TermPipeLine(PipeLine):
 
         #for the terminal app only one pipeline can exist at once
         #instantiating a new pipeline object will wipe the existing pipeline
-        save_changes()
+        self.save_changes_terminal()
         save_obj(self.created, 'last_created_at')
 
     def update_property_terminal(self,**kwargs):
         super().update_property(**kwargs)
-        save_changes()
+        self.save_changes_terminal()
 
     def delete_property_terminal(self, **kwargs):
         super().delete_property(**kwargs)
-        save_changes()
+        self.save_changes_terminal()
 
     def save_changes_terminal(self):
         self.source_key = self.dictionary['source_key']
