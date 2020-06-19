@@ -14,3 +14,6 @@ CHUNK_LIMIT = 1
 
 #HIdes the dataset from being visible on web
 HIDE_DATASET = ["not_a_csv","test_download_2", "test_key"]
+
+#For parralelisation
+CORES = 4

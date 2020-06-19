@@ -2,14 +2,33 @@
 #this approach was taken from: https://stackabuse.com/levenshtein-distance-and-text-similarity-in-python/
 import numpy as np
 import pandas as pd
-from pandarallel import pandarallel
+import pathos.multiprocessing as mp
+from functools import partial
+from itertools import repeat, starmap
+import settings
+import datetime
 
-from multiprocessing import Pool, cpu_count
+def parallelize_dataframe(series, func, **kwargs):
+
+    start = datetime.datetime.now()
+
+    #series_split = np.array_split(series, settings.CORES)
+    pool = mp.Pool(settings.CORES)
+    partial_func = partial(func,**kwargs)
+    #df = pd.concat( pool.starmap( func, params )
+    result = pool.map( partial_func, series )
+    pool.close()
+    pool.join()
+
+    end  = datetime.datetime.now()
+    time = end - start
+    print("Processing time: " + str(time.total_seconds()) + " seconds")
+
+    return result
 
 #Take a dataframe with SMILES strings and one target SMILES then add a column of the scores
 def run_similarity(dataframe,column_key,**kwargs):
 
-    pandarallel.initialize()
     #The first argument must be a dataframe
     if isinstance(dataframe, pd.DataFrame):
         #You need to put in a valid argument for a column header for the source dataframe
@@ -29,18 +48,18 @@ def run_similarity(dataframe,column_key,**kwargs):
                     print(dataframe)
                     return dataframe
                 #The dataframe will be as its dataset object so we need to look at the dataframe parameter
-                elif isinstance(kwargs[key][0].dataframe, pd.DataFrame):
+                elif isinstance(kwargs[key][0], pd.DataFrame):
                     #there should only be a single column passed
                     ref_column = kwargs[key][1]
                     norm = kwargs[key][2]
                     #Double check we've not screwed up by looking at the headers parameter
-                    if ref_column in kwargs[key][0].headers:
+                    if ref_column in kwargs[key][3]:
                         print("Calculating")
                         print(".")
                         df2_dataset = kwargs[key][0]
 
                         #We need to apply the lev_aggregator function this time and unpack the result into new columns
-                        dataframe['new'] = dataframe[column_key].parallel_apply(lev_aggregator, args = (df2_dataset,ref_column,norm,))
+                        dataframe['new'] = parallelize_dataframe(dataframe[column_key],lev_aggregator, colB = df2_dataset, col_header = ref_column, norm = norm )
                         score_col = 'sim_score_' + str(key) +"_"+ str(ref_column)
                         try:
                             print("trying updates...")
@@ -61,28 +80,26 @@ def run_similarity(dataframe,column_key,**kwargs):
         print("Error: It looks like your dataframe isn't a pandas DataFrame")
 
 #Scores every SMILES in list against one and returns only the max score
-def lev_aggregator(seqA, colB, col_header,norm):
+def lev_aggregator(seqA, colB, col_header, norm):
+    #if not isinstance(colB, pd.Series):
+    #    print("Lev aggregator needs a dataframe for colB")
     #remember that colB is a dataset object - let's add a results column to each chunk
-    df_col = colB.dataframe[col_header]
-    max_cpu = cpu_count()
+    df_col = colB[col_header]
     #result = [ levenshtein(seqA, x) for x in df_col ]
     if norm == True:
-        with Pool(max_cpu) as p:
-            result = p.starmap(levenshtein_norm,[(seqA, x) for x in df_col],100)
-            #result = [ levenshtein(seqA, x) for x in df_col ]
+        result = [levenshtein_norm(seqA,x) for x in df_col]
     else:
-        with Pool(max_cpu) as p:
-            result = p.starmap(levenshtein,[(seqA, x) for x in df_col],100)
-            #result = [ levenshtein(seqA, x) for x in df_col ]
-    colB.dataframe['result'] = pd.Series(result)
+        #result = p.starmap(levenshtein,[(seqA, x) for x in df_col],100)
+        result = [ levenshtein(seqA, x) for x in df_col ]
+    colB['result'] = pd.Series(result)
     #stitch the chunks back together and pull out the best score from the whole dataframe
     if norm == True:
-        idx = colB.dataframe['result'].idxmax()
-        min = colB.dataframe['result'].max()
+        idx = colB['result'].idxmax()
+        min = colB['result'].max()
     else:
-        idx = colB.dataframe['result'].idxmin()
-        min = colB.dataframe['result'].min()
-    return colB.dataframe[col_header][idx] , min
+        idx = colB['result'].idxmin()
+        min = colB['result'].min()
+    return colB[col_header][idx] , min
 
 #the minimum number of insertions, deletions and substitutions required to turn 1 string into another
 def levenshtein(seqA, seqB):
@@ -100,7 +117,7 @@ def levenshtein_norm(seqA, seqB):
     seq1 = str(seqA)
     seq2 = str(seqB)
     if seq1 == "" or seq1.lower() == "nan" or seq2 == "" or seq2.lower() == "nan":
-        return 10000
+        return 0
     else:
         if len(seq1) > len(seq2):
             seq1, seq2 = seq2, seq1

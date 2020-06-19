@@ -62,14 +62,14 @@ class PipeLine(object):
 
                 #look for dataframe smiles task next
                 if "dataframe_smiles_ref" in sim_key:
-                    print("running dataframe siliatiry...")
+                    print("running dataframe similiatiry...")
                     ref_key = pipeline[sim_key]
                     ref_dataset = load_data(ref_key)
                     #sub key gen can also be used to generate an existing key
                     col_key = sub_key_gen("dataframe_smiles_col", key, **tmp_sim_pipe)
                     ref_column = pipeline[col_key]
                     #pass in the reference df as its DataSet object
-                    mol_reference = { ref_key : [ ref_dataset[ref_key] , ref_column, norm] }
+                    mol_reference = { ref_key : [ ref_dataset[ref_key].dataframe , ref_column, norm, ref_dataset[ref_key].headers ] }
 
                     dataset[ds_key].chunks = [
                         run_similarity(chunk,header,**mol_reference)
@@ -77,7 +77,7 @@ class PipeLine(object):
                     ]
                     dataset[ds_key].stitch_chunks()
 
-        return dataset[ds_key]
+        return dataset[ds_key].dataframe
 
 #Class definition of a terminal pipeline
 class TermPipeLine(PipeLine):

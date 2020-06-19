@@ -104,7 +104,7 @@ def main_term():
 
                         dataset = load_data(ref_data_key, chunk_limit = 1)
                         ref_headers = dataset[ref_data_key].headers
-                        ref_column = selector( ref_headers , "Which column contains teh SMILE?" )
+                        ref_column = selector( ref_headers , "Which column contains the SMILE?" )
                         new_entry2 = sub_key_gen("dataframe_smiles_col", "similarity_score", **pipeline)
 
                         kwargs = {new_entry : ref_data_key , new_entry2 : ref_column}

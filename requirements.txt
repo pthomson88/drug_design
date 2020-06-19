@@ -5,4 +5,4 @@ DateTime==4.3
 requests==2.23.0
 pytz==2019.3
 urllib3==1.25.9
-pandarallel==1.4.8
+pathos==0.2.6
