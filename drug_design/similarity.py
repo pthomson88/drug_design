@@ -11,9 +11,18 @@ import datetime
 def parallelize_dataframe(series, func, **kwargs):
 
     start = datetime.datetime.now()
+    cores = settings.CORES
+
+    if "cores" in kwargs:
+        try:
+            cores = int(kwargs["cores"])
+        except:
+            print("Cores passed not an integer - keeping default")
+
+    del kwargs["cores"]
 
     #series_split = np.array_split(series, settings.CORES)
-    pool = mp.Pool(settings.CORES)
+    pool = mp.Pool(cores)
     partial_func = partial(func,**kwargs)
     #df = pd.concat( pool.starmap( func, params )
     result = pool.map( partial_func, series )
@@ -23,22 +32,22 @@ def parallelize_dataframe(series, func, **kwargs):
     end  = datetime.datetime.now()
     time = end - start
     print("Processing time: " + str(time.total_seconds()) + " seconds")
-
+    
     return result
 
 #Take a dataframe with SMILES strings and one target SMILES then add a column of the scores
-def run_similarity(dataframe,column_key,**kwargs):
+def run_similarity(dataframe,column_key,mol_reference,**kwargs):
 
     #The first argument must be a dataframe
     if isinstance(dataframe, pd.DataFrame):
         #You need to put in a valid argument for a column header for the source dataframe
         if column_key in dataframe.columns:
         #There should only be one key in kwargs - the name of the second argument passed
-            for key in kwargs:
+            for key in mol_reference:
                 #If the second argument isn't a list, dictionary or dataframe:
-                if isinstance(kwargs[key][0], (str, int)):
-                    SMILES = str(kwargs[key][0])
-                    norm = kwargs[key][1]
+                if isinstance(mol_reference[key][0], (str, int)):
+                    SMILES = str(mol_reference[key][0])
+                    norm = mol_reference[key][1]
                     score_col = 'sim_score_' + SMILES
                     if norm == True:
                         dataframe[score_col] = dataframe[column_key].apply(levenshtein_norm, args = (SMILES,))
@@ -48,18 +57,23 @@ def run_similarity(dataframe,column_key,**kwargs):
                     print(dataframe)
                     return dataframe
                 #The dataframe will be as its dataset object so we need to look at the dataframe parameter
-                elif isinstance(kwargs[key][0], pd.DataFrame):
+                elif isinstance(mol_reference[key][0], pd.DataFrame):
                     #there should only be a single column passed
-                    ref_column = kwargs[key][1]
-                    norm = kwargs[key][2]
+                    ref_column = mol_reference[key][1]
+                    norm = mol_reference[key][2]
                     #Double check we've not screwed up by looking at the headers parameter
-                    if ref_column in kwargs[key][3]:
+                    if ref_column in mol_reference[key][3]:
                         print("Calculating")
                         print(".")
-                        df2_dataset = kwargs[key][0]
+                        df2_dataset = mol_reference[key][0]
 
                         #We need to apply the lev_aggregator function this time and unpack the result into new columns
-                        dataframe['new'] = parallelize_dataframe(dataframe[column_key],lev_aggregator, colB = df2_dataset, col_header = ref_column, norm = norm )
+                        if "multiprocess" in kwargs:
+                            cores = kwargs['multiprocess']
+                            dataframe['new'] = parallelize_dataframe(dataframe[column_key],lev_aggregator, colB = df2_dataset, col_header = ref_column, norm = norm, cores = cores )
+                        else:
+                            dataframe['new'] = dataframe[column_key].apply(lev_aggregator, args = (df2_dataset, ref_column, norm,))
+
                         score_col = 'sim_score_' + str(key) +"_"+ str(ref_column)
                         try:
                             print("trying updates...")
@@ -69,6 +83,10 @@ def run_similarity(dataframe,column_key,**kwargs):
                         except:
                             print("Ignoring some other exception...")
                         dataframe = dataframe.drop(['new'],axis=1)
+                        if norm == True:
+                            dataframe = dataframe.sort_values(score_col,ascending=False)
+                        else:
+                            dataframe = dataframe.sort_values(score_col)
                         print("SUCCESS!!!")
                         return dataframe
 

@@ -16,4 +16,4 @@ CHUNK_LIMIT = 1
 HIDE_DATASET = ["not_a_csv","test_download_2", "test_key"]
 
 #For parralelisation
-CORES = 4
+CORES = 8

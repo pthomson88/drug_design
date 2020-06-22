@@ -5,6 +5,7 @@ from drug_design.term_num_opts import *
 from drug_design.gsheet_store import *
 from drug_design.PipeLine import TermPipeLine
 from drug_design.key_increment import key_increment, sub_key_gen
+import settings
 
 #A terminal friendly way to load a dataset
 def term_load_data():
@@ -64,9 +65,13 @@ def main_term():
 
                     do_things = input("Type Y to turn run this pipeline or N to return to go back:> ")
                     if do_things.lower() == "y":
-                        result = pipeline_obj.run_pipeline()
+                        cores = input("How many cores would you like to use? The default is " + str(settings.CORES) + " (just press enter to keep the default):> ")
+                        if cores == "":
+                            cores = settings.CORES
+                        result = pipeline_obj.run_pipeline_terminal(cores = cores)
                         print("********************************************************")
                         print(result)
+                        result.to_csv('../results.csv', index = False)
 
                 elif next_action == "Similarity score":
                     sim_key = key_increment("similarity_score",**pipeline)
@@ -124,6 +129,8 @@ def main_term():
                     print("Clearing the current pipeline... ")
                     clearout = {key:"delete_me" for key in pipeline_obj.dictionary}
                     pipeline_obj.delete_property_terminal(**clearout)
+                    #clearing out the pipeline means you need to load some more data
+                    break
 
                 elif next_action == "Link or unlink a dataset":
                     gsheet_store()

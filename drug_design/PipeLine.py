@@ -1,5 +1,6 @@
 import datetime
 import pytz
+import settings
 from .save_load import load_obj, save_obj
 from .load_data import load_data
 from .similarity import run_similarity
@@ -55,7 +56,7 @@ class PipeLine(object):
                 if "single_smiles" in sim_key:
                     mol_reference = {"SMILES" : [tmp_sim_pipe[sim_key],norm]}
                     dataset[ds_key].chunks = [
-                        run_similarity(chunk,header,**mol_reference)
+                        run_similarity(chunk,header,mol_reference)
                         for chunk in dataset[ds_key].chunks
                     ]
                     dataset[ds_key].stitch_chunks()
@@ -72,7 +73,7 @@ class PipeLine(object):
                     mol_reference = { ref_key : [ ref_dataset[ref_key].dataframe , ref_column, norm, ref_dataset[ref_key].headers ] }
 
                     dataset[ds_key].chunks = [
-                        run_similarity(chunk,header,**mol_reference)
+                        run_similarity(chunk,header,mol_reference,**kwargs)
                         for chunk in dataset[ds_key].chunks
                     ]
                     dataset[ds_key].stitch_chunks()
@@ -105,6 +106,19 @@ class TermPipeLine(PipeLine):
         self.save_changes_terminal()
 
     def save_changes_terminal(self):
-        self.source_key = self.dictionary['source_key']
+        try:
+            self.source_key = self.dictionary['source_key']
+        except KeyError:
+            self.source_key = None
         save_obj(self.dictionary,'tmp_pipeline')
         save_obj(self.source_key, 'tmp_key')
+
+    def run_pipeline_terminal(self, **kwargs):
+        #runs the pipeline with multiprocessing turned on
+        if "cores" in kwargs:
+            cores = kwargs["cores"]
+        else:
+            cores = settings.CORES
+
+        result = super().run_pipeline(multiprocess = cores)
+        return result
