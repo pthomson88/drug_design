@@ -71,7 +71,7 @@ def main_term():
                         result = pipeline_obj.run_pipeline_terminal(cores = cores)
                         print("********************************************************")
                         print(result)
-                        result.to_csv('../results.csv', index = False)
+                        result.to_csv('../drug_design_results.csv', index = False)
 
                 elif next_action == "Similarity score":
                     sim_key = key_increment("similarity_score",**pipeline)
