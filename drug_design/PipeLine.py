@@ -69,7 +69,7 @@ class PipeLine(object):
                     #sub key gen can also be used to generate an existing key
                     col_key = sub_key_gen("dataframe_smiles_col", key, **tmp_sim_pipe)
                     ref_column = pipeline[col_key]
-                    #pass in the reference df as its DataSet object
+                    #pass in the reference df
                     mol_reference = { ref_key : [ ref_dataset[ref_key].dataframe , ref_column, norm, ref_dataset[ref_key].headers ] }
 
                     dataset[ds_key].chunks = [

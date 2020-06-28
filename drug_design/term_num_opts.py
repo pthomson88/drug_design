@@ -21,10 +21,9 @@ def selector(options,*messages):
 
         try:
             i_choice = int(choice)
-            assert isinstance(i_choice, int)
-        except AssertionError:
-            print("\nError: Sorry, that's not a valid entry, please enter a number from the list")
-            rego = input("Would you like to try again? Type Y for yes or N for no :> ")
+        except ValueError:
+            print("\nError: Sorry, that's not a valid entry, please enter a number from the list.")
+            rego = input("\nWould you like to try again? Type Y for yes or N for no :> ")
             if rego.lower() == "y":
                 pass
             else:

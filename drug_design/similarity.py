@@ -32,10 +32,13 @@ def parallelize_dataframe(series, func, **kwargs):
     end  = datetime.datetime.now()
     time = end - start
     print("Processing time: " + str(time.total_seconds()) + " seconds")
-    
+
     return result
 
 #Take a dataframe with SMILES strings and one target SMILES then add a column of the scores
+#Expected mol_reference formats:
+#... for single SMILES = { "SMILES" : [ SMILES : string, norm : boolean ] }
+#... for dataframe SMILES = { reference_dataset_key : [reference dataframe : pandas.DataFrame, reference_column: string, norm : boolean, reference_dataset_headers : list ] }
 def run_similarity(dataframe,column_key,mol_reference,**kwargs):
 
     #The first argument must be a dataframe

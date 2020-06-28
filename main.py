@@ -405,7 +405,7 @@ def create_app():
         except:
             return redirect( url_for('access_denied') )
 
-        return render_template('results_page.html', Results = Markup(result.dataframe.to_html()))
+        return render_template('results_page.html', Results = Markup(result.to_html()))
 
     return app
 

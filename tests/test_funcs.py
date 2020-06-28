@@ -7,24 +7,42 @@ sys.path.insert(0,parentdir)
 from drug_design.load_data import *
 from drug_design.similarity import *
 from drug_design.gsheet_store import *
+from drug_design import UrlDict
 from drug_design.save_load import save_obj, load_obj
-from main_term import *
+from main_term import main_term
+from drug_design.term_num_opts import selector
 
 import pandas as pd
 import pytest
 import io
 
+#we might need to mokeypatch a test url_dict for some tests
+class MockUrlDict:
+
+    # mock out sessions so that the following is always returned on initialising a session
+    @staticmethod
+    def mock_url_dict(self, *args, **kwargs):
+        self.name = "test_url_dict"
+        self.dictionary = {
+            'test_download': 'https://docs.google.com/spreadsheets/d/1o__Ar6O65DowaqCATTNjeK9kvr9NXJiX4Slo0tK-e4k/export?format=csv',
+            'chembl26_ph3_ph4': 'https://docs.google.com/spreadsheets/d/1djFMETW8A111b7xv421L9jJWtIIN7Sn0ap95u8ml8eQ/export?format=csv',
+            'chembl26_similar_protein_mols': 'https://docs.google.com/spreadsheets/d/1upjwIomN7kIgXhRu9NFU9C0WK5S0lJSOpVC_BH1OBxs/export?format=csv',
+            'not_a_csv': 'https://docs.google.com/spreadsheets/d/1Rw9DkxM_rzmS59qPS-TF6JV9MAu8LJtB/export?format=csv'
+            }
+        self.webdictionary = self.dictionary
+
 #Main module tests
 #If I don't answer numerically to a numbered choice list I should be shown an error and askey to try again
-def test_main_choices(monkeypatch):
+#The seector module handles this across the board, below is simply a unit test for that module
+def test_selector_choices(monkeypatch):
 
     capturedOutput = io.StringIO()          # Create StringIO object
-    sys.stdout = capturedOutput                #  and redirect stdout.
+    sys.stdout = capturedOutput                #  and redirect stderr.
 
-    responses = iter(["", 'this is not a number', '5'])
+    responses = iter(['this is not a number','n'])
     monkeypatch.setattr('builtins.input', lambda msg: next(responses))
 
-    main_term()
+    selector(["test option 1", "test option 2", "test option 3"])
 
     sys.stdout = sys.__stdout__
 
@@ -34,10 +52,15 @@ def test_main_choices(monkeypatch):
 #check that the similarity score makes sense in a basic test using main as entry point
 def test_sim(monkeypatch):
 
+    monkeypatch.setattr('drug_design.UrlDict.UrlDict.__init__',MockUrlDict.mock_url_dict)
+
     capturedOutput = io.StringIO()
     sys.stdout = capturedOutput
 
-    responses = iter(["test_download", "N", "1", "1", "a", "dog", "5"])
+    #responses "1" for "test_download", "2" for "Similarity score", "2" for "a"...
+    # ... 5 for "manual entry", "dog" for SMILES,  "Y" for normalise...
+    #..."1" for "View and run pipeline", "Y" for run, "" for default cores, the 6 to "Quit"
+    responses = iter([1,2,2,5,"dog","Y",1,"Y","",6])
     monkeypatch.setattr('builtins.input', lambda msg: next(responses))
 
     main_term()
@@ -49,39 +72,38 @@ def test_sim(monkeypatch):
 
 #check similarity score directly
 def test_sim2():
-    word = {"word" : "dogs"}
+    #Set the reference string to be "dogs" and normalisation to be off
+    mol_reference = {"SMILES" : ["dogs",False]}
     dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
 
-    dataframe = run_similarity(dataframe,"col1",**word)
+    dataframe = run_similarity(dataframe,"col1",mol_reference)
 
     assert isinstance(dataframe, pd.DataFrame) and int(dataframe["sim_score_dogs"]) == 1
 
 #Tests for non standard entities - e.g. integers, floats and lists
 def test_sim_int():
     #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
-    word = {"word" : 543}
+    mol_reference = {"SMILES" : [543,False]}
     dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
 
     capturedOutput = io.StringIO()                # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
-    df = run_similarity(dataframe,"col1",**word)
+    df = run_similarity(dataframe,"col1",mol_reference)
 
     sys.stdout = sys.__stdout__
 
-    assert ( "error" in capturedOutput.getvalue().lower() ) or ( int(df['sim_score_' + str(word["word"])].values) == 3 )
-
+    assert ( "error" in capturedOutput.getvalue().lower() ) or ( int(df['sim_score_' + str(mol_reference["SMILES"][0])].values) == 3 )
 
 #Tests for errors being returned if column keys don't match
 def test_sim_keys_dont_match():
-    #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
-    word = {"word" : "dog"}
+    mol_reference = {"SMILES" : ["dog",False]}
     dataframe = pd.DataFrame(data = {"col1" : ["dog"]})
 
     capturedOutput = io.StringIO()                # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
-    df = run_similarity(dataframe,"col2",**word)
+    df = run_similarity(dataframe,"col2",mol_reference)
 
     sys.stdout = sys.__stdout__
 
@@ -89,32 +111,30 @@ def test_sim_keys_dont_match():
 
 #test for if dataframe isn't a dataframe
 def test_sim_not_a_df():
-    #expected score 3 - an integer should be treated as a string by the similarity algorithm or return an error message
-    word = {"word" : "dog"}
+    mol_reference = {"SMILES" : ["dog",False]}
     dataframe = {"col1" : ["dog"]}        #dataframe is a dictionary instead
 
     capturedOutput = io.StringIO()                # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
-    df = run_similarity(dataframe,"col2",**word)
+    df = run_similarity(dataframe,"col1",mol_reference)
 
     sys.stdout = sys.__stdout__
 
     assert "error" in capturedOutput.getvalue().lower() #some sort of error message should be displayed
 
 #Test to check happy path for checking similarity fo strings in one dataframe to those in another
-def test_sim_df_df(monkeypatch):
+def test_sim_df_df():
 
     df_source = pd.DataFrame(data = {"col1" : ["dog"]})
     df_reference = pd.DataFrame(data = {"col2" : ["dogs", "cats"]})
 
-    df2 = {"df_reference" : df_reference}
+    #... for dataframe SMILES = { reference_dataset_key : [reference dataframe : pandas.DataFrame, reference_column: string, norm : boolean, reference_dataset_headers : list ] }
+    mol_reference = {"df_reference" : [df_reference,"col2",False,["col2"]]}
 
-    monkeypatch.setattr('builtins.input', lambda x: "col2")
+    result = run_similarity(df_source,"col1",mol_reference)
 
-    df_source = run_similarity(df_source,"col1",**df2)
-
-    assert df_source['sim_score_df_reference_col2'].values[0] == 1
+    assert result['sim_score_df_reference_col2'].values[0] == 1
 
 #test levenshtein normalisation happy path
 def test_sim_norm_happy():
@@ -135,14 +155,11 @@ def test_sim_norm_lengthcheck():
     #if its off the short string comparison will score 1 and the long 2
     assert short == long
 
+#basic unit test - test download should be a dataframe - use MockUrlDict
 def test_load_data(monkeypatch):
 
-    # monkeypatch the "input" function, so that it returns "test_download".
-    # This simulates the user entering "test_download" in the terminal:
-    #test_download will both act as a suitable key for data and an escape for the while loop
-    monkeypatch.setattr('builtins.input', lambda x: "test_download")
-
-    i = load_data()
+    monkeypatch.setattr('drug_design.UrlDict.UrlDict.__init__',MockUrlDict.mock_url_dict)
+    i = load_data("test_download")
     df = i["test_download"].dataframe
 
     assert isinstance(df, pd.DataFrame)
@@ -150,11 +167,11 @@ def test_load_data(monkeypatch):
 #Keys don't match
 def test_load_data_fail1(monkeypatch):
 
-    monkeypatch.setattr('builtins.input', lambda x: "an unlikely name for a dataset")
+    monkeypatch.setattr('drug_design.UrlDict.UrlDict.__init__',MockUrlDict.mock_url_dict)
     capturedOutput = io.StringIO()          # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
-    i = load_data()
+    i = load_data("an unlikely name for a dataset")
 
     sys.stdout = sys.__stdout__                   # Reset redirect.
 
@@ -163,16 +180,13 @@ def test_load_data_fail1(monkeypatch):
 #Can't be converted to a csv
 def test_no_csv(monkeypatch):
 
-    #give responses in a sensible order - note the google id to a google image as the first
-    responses = iter(['1Rw9DkxM_rzmS59qPS-TF6JV9MAu8LJtB', 'not_a_csv', 'N', 'not_a_csv', 'N'])
-    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
+    monkeypatch.setattr('drug_design.UrlDict.UrlDict.__init__',MockUrlDict.mock_url_dict)
+
     capturedOutput = io.StringIO()          # Create StringIO object
     sys.stdout = capturedOutput                   #  and redirect stdout.
 
-    #load the image as if it were a potential new dataset
-    j = add_gsheet_url()
     #next try and load it into a dataframe - this will fail
-    i = load_data()
+    i = load_data("not_a_csv")
 
     sys.stdout = sys.__stdout__                   # Reset redirect.
 
@@ -183,68 +197,39 @@ def test_no_csv(monkeypatch):
 #add a url to the dict and check it's there
 def test_gsheet_happy(monkeypatch):
 
-    #make sure there is no test_key
-    k = load_obj('url_dict')
-    if 'test_key' in k:
-        del k['test_key']
-        save_obj(k,'url_dict')
+    test_url_dict = {"test_url_dict" : "for testing only"}
+    save_obj(test_url_dict, "test_url_dict")
 
-    responses = iter(['1','test_entry1', 'test_key', 'N', '3'])
+    # 1: Link new dataset, "test_entry_1" : Google ID, "test_key" : name , "n" : quit
+    responses = iter([1,'test_entry1', 'test_key_1', "n"])
     monkeypatch.setattr('builtins.input', lambda msg: next(responses))
 
-    j = gsheet_store()
-    k = load_obj('url_dict')
+    #option to use a test url_dict built into module for testing purposes
+    j = gsheet_store(test = "test_url_dict")
+    k = load_obj("test_url_dict")
 
-    assert 'test_key' in k and 'test_entry1' in k['test_key']
+    assert 'test_key_1' in k and 'test_entry1' in k['test_key_1']
 
 #remove url to the dict and check it's worked
 def test_gsheet_delete(monkeypatch):
 
-    #make sure there is a test_key
-    k = load_obj('url_dict')
-    if not 'test_key' in k:
-        k.update({'test_key' : 'junk test data to be removed'})
-        save_obj(k,'url_dict')
+    #make sure there is an appropriate dict to delete from
+    test_url_dict = {"test_url_dict" : "for testing only", "test_key_1" : "junk test data to be removed"}
+    save_obj(test_url_dict, "test_url_dict")
 
-    responses = iter(['2','test_key', 'N', '3'])
+    # 2: Unlink dataset, 2 : name = "test_key" , "n" : quit
+    responses = iter([2,2,"n"])
     monkeypatch.setattr('builtins.input', lambda msg: next(responses))
 
-    j = gsheet_store()
-    k = load_obj('url_dict')
+    j = gsheet_store(test = "test_url_dict")
+    k = load_obj('test_url_dict')
 
-    assert not 'test_key' in k
-
-#Key mismatch in deleting data
-def test_gsheet_delete(monkeypatch):
-
-    capturedOutput = io.StringIO()          # Create StringIO object
-    sys.stdout = capturedOutput                   #  and redirect stdout.
-
-    #make sure there is a test_key
-    k = load_obj('url_dict')
-    if not 'test_key' in k:
-        k.update({'test_key' : 'junk test data to be removed'})
-        save_obj(k,'url_dict')
-
-    responses = iter(['2','mismatched_key', 'N', '3'])
-    monkeypatch.setattr('builtins.input', lambda msg: next(responses))
-
-    j = gsheet_store()
-    k = load_obj('url_dict')
-
-    sys.stdout = sys.__stdout__                   # Reset redirect.
-
-    assert 'test_key' in k and "error" in capturedOutput.getvalue().lower()
+    assert not 'test_key_1' in k
 
 #Try and load a non-existant objects
 def test_load_absent_obj():
 
-        capturedOutput = io.StringIO()          # Create StringIO object
-        sys.stdout = capturedOutput                   #  and redirect stdout.
+    k = load_obj('not_and_object')
 
-        k=load_obj('not_and_object')
-
-        sys.stdout = sys.__stdout__                   # Reset redirect.
-
-        assert "error" in capturedOutput.getvalue().lower()
-        #you should end up with an error message
+    assert "error" in k.lower()
+    #you should end up with an error message

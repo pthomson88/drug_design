@@ -39,6 +39,7 @@ def normalise_on(pipeline_obj):
 
 def main_term():
     quit = False
+    retry = True
     #when we start for the first time dataframes should be empty
     pipeline = {}
     try:
@@ -50,11 +51,17 @@ def main_term():
                 print("\n Before we get started you're going to need to load some data.\n ")
 
                 pipeline_obj = term_load_data()
-                pipeline = pipeline_obj.dictionary
+                if pipeline_obj == False:
+                    quit = True
+                    print("See you next time... \n")
+                    retry = False
+                    break
+                else:
+                    pipeline = pipeline_obj.dictionary
+
                 if not "source_key" in pipeline:
                     print("** Remember you can hit Ctrl-C to quit at any time **")
 
-            retry = True
             while retry == True:
                 print("What would you like to do next? \n Your options are: \n")
                 next_action = selector(["View and run pipeline","Similarity score","Load different data","Clear my pipeline","Link or unlink a dataset","Quit"])

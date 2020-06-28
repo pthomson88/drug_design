@@ -2,14 +2,18 @@ from .save_load import save_obj, load_obj
 from .UrlDict import UrlDict
 from .term_num_opts import selector
 
-def gsheet_store():
+def gsheet_store(**kwargs):
     cont = "y"
     while cont.lower() == "y":
         print("Would you like to...")
         action = selector(["Link a new dataset by Google ID" , "Un-link an existing dataset" , "Go back"])
         print("")
 
-        url_dict_obj = UrlDict(name = "url_dict")
+        if "test" in kwargs:
+            url_dict_obj = UrlDict(name = kwargs["test"])
+        else:
+            url_dict_obj = UrlDict(name = "url_dict")
+
         url_dict = url_dict_obj.dictionary
 
         if action == "Link a new dataset by Google ID":
@@ -51,10 +55,7 @@ def gsheet_store():
                 print("Your availble datasets are...")
                 key = selector( dataset_options , "Which dataset would you like to delete?" )
 
-                try:
-                    url_dict_obj.delete_dataset(key)
-                except KeyError:
-                    print("Error: Make sure you type the name of the dataset exactly")
+                url_dict_obj.delete_dataset(key)
 
                 url_dict = url_dict_obj.dictionary
 
