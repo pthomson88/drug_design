@@ -41,22 +41,11 @@ To test it's all working try and load some test data using the python shell:
 ```
 python
 
-from drug_design.load_data import *
+from drug_design.load_data import load_data
 
-term_load_data()
-```
+data = load_data("test_download")
 
-You should see an output like the following in your terminal:
 ```
-1. test_download
-2. chembl26_ph3_ph4
-3. chembl26_similar_protein_mols
-4. not_a_csv
-5. test_key
-
-Which dataset would you like to load. If you'd like to skip this step just press enter :>
-```
-Type ```1``` exactly
 
 The output should be as follows:
 
@@ -70,14 +59,38 @@ test_download
 3  5  e
 *******************
 
+```
 
-{'test_download': <drug_design.datasets.DataSets.DataSet object at 0x10c717c40>}
+You've now loaded a dataset, you can get the dataframe from this with the following command (specifying which dataset and that you want a dataframe):
+
+```
+data["test_download"].dataframe
+```
+
+The result will be:
+
+```
+   1  a
+0  2  b
+1  3  c
+2  4  d
+3  5  e
 ```
 
 To exit the shell type
 ```
 quit()
 ```
+
+### Useful functions
+
+Useful functions and modules:
+* ```main_term.py``` - main terminal application (main.py is set up for the web app). run this to access the full functionality via the terminal
+* ```pytest tests``` - tests are stored in ```test_funcs.py```, ```test_testss.py``` and ```test_webapp.py``` . Running them with the ```pytest``` command is a great way to check that everything is set up correctly and working - it's also useful if you've made changes and want to make sure the code still works.
+* ```load_data.py``` - we've already explored - this module loads the datasets you need as a DataSet object based on a dataframe
+* ```similarity.py``` - includes functions for edit distance between two string, between 1 string and every entry in a dataframe column and between every entry in one column with every entry in another - beware big calculations can be slow.
+* ```gsheet_store.py``` - this mondule lets you link and unlink datasets - currently any google sheet in a shared google drive location can be added by providing a name and the ID for the google sheet
+
 ### Running web app locally
 Check you're in the top level drug_design directory:
 ```
@@ -117,13 +130,6 @@ You will see the following:
 
 Navigate to http://127.0.0.1:500/index to start the web app.
 
-### Useful functions
-
-Useful functions and modules:
-* ```main_term.py``` - main terminal application (main.py is set up for the web app). run this to access the full functionality via the terminal
-* ```pytest tests``` - tests are stored in ```test_funcs.py```, ```test_testss.py``` and ```test_webapp.py``` . Running them with the ```pytest``` command is a great way to check that everything is set up correctly and working - it's also useful if you've made changes and want to make sure the code still works.
-* ```load_data.py``` - we've already explored - this module loads all the datasets you need as a DataSet object based on a dataframe, try out ```term_load_data()``` from the python shell
-* ```similarity.py``` - includes functions for edit distance between two string, between 1 string and every entry in a dataframe column and between every entry in one column with every entry in another - beware big calculations can be slow.
 
 ### Prerequisites
 
