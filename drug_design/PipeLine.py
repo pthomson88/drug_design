@@ -25,7 +25,8 @@ class PipeLine(object):
 
     def delete_property(self,**kwargs):
         for key in kwargs:
-            del self.dictionary[key]
+            if key in self.dictionary:
+                del self.dictionary[key]
 
     #a pipeline can be run
     def run_pipeline(self, **kwargs):
@@ -39,7 +40,7 @@ class PipeLine(object):
         #a dict of all properties not labelled sub mentioning similarity score
         master_sim_pipe = {key:all_sim_pipe[key] for key in all_sim_pipe if not key[:3] == "sub" }
 
-        #iterate through similarirt tasks
+        #iterate through similariry tasks
         for key in master_sim_pipe:
             #e.g. a dict with every property mentoining similarity_score_100
             tmp_sim_pipe = {k:all_sim_pipe[k] for k in all_sim_pipe if key in k}

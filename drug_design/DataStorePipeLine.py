@@ -106,7 +106,7 @@ class DataStorePipeLine(PipeLine):
                 raise Exception(r.status_code)
 
     def delete_property_datastore(self, **kwargs):
-        update = self.handle_datastore_properties()
+        update = self.handle_datastore_properties(**kwargs)
         super().delete_property(**update)
         #deletes the same property from the pipeline entity
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/' + self.user_id + '/delete_properties'

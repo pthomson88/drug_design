@@ -14,71 +14,83 @@ import pandas as pd
 
 from flask import Flask, jsonify, request, render_template, redirect, url_for, Markup, make_response, abort
 
+#Some silent function to fetch a csrf token from drug_design_backend
+#This needs to be required by the backend and included in every requests
+#We should call this function at the start of every view
+def csrf_token():
+    url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/token'
+    r = requests.get(url, verify = settings.VERIFY_SSL)
+    response = r.json()
+    token = response['csrf_token']
+    return token
+
+def get_session_key(user_id):
+    url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + user_id
+    r = requests.get(url, verify = settings.VERIFY_SSL)
+    if r.status_code == 403:
+        raise Exception(r.status_code)
+    response = r.json()
+    session_key =  response['session_key']
+    return session_key
+
+def set_session_cookie(user_id, response_contents, **kwargs):
+    #only try to get a session yey if you have to
+    if not 'session_key' in kwargs:
+        session_key = get_session_key(user_id)
+    else:
+        session_key = kwargs['session_key']
+
+    response = make_response(response_contents)
+    response.set_cookie('session_key', session_key)
+    response.set_cookie('user_id', user_id)
+    return {'session_key' : session_key, 'response' : response}
+
+def fetch_session_cookies():
+    session_key = request.cookies.get('session_key')
+    user_id = request.cookies.get('user_id')
+
+    cookies = {
+
+        "user_id" : user_id,
+        "session_key" : session_key
+
+        }
+        
+    return cookies
+
+def selectuser_loadpipeline(*args,**kwargs):
+    max = len(settings.ALLOWLIST)
+    end = settings.ALLOWLIST[max-1]
+    pipeline = None
+    assert 'user_id' in kwargs
+    user_id = kwargs['user_id']
+    print("starting with " + str(user_id))
+    #first see if the pipeline loads with the passed user
+    try:
+        pipeline = DataStorePipeLine(*args, **kwargs)
+        return pipeline, user_id
+    except ValueError:
+        #if it doesn't work then try and find another dormant user_id
+        print("user_id " + user_id + " failed")
+        for item in settings.ALLOWLIST:
+            user_id = item
+            kwargs['user_id'] = user_id
+            print("... " + user_id)
+            try:
+                pipeline = DataStorePipeLine(*args, **kwargs)
+                return pipeline, user_id
+            except ValueError:
+                print("user_id " + user_id + " failed")
+
+            if user_id == end:
+                print("all user_id's failed")
+                return False, settings.ALLOWLIST[0]
+            else:
+                print("trying another user_id... " )
+
 def create_app():
 
     app = Flask(__name__)
-
-    #Some silent function to fetch a csrf token from drug_design_backend
-    #This needs to be required by the backend and included in every requests
-    #We should call this function at the start of every view
-    def csrf_token():
-        url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/token'
-        r = requests.get(url, verify = settings.VERIFY_SSL)
-        response = r.json()
-        token = response['csrf_token']
-        return token
-
-    def get_session_key(user_id):
-        url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/session/' + user_id
-        r = requests.get(url, verify = settings.VERIFY_SSL)
-        if r.status_code == 403:
-            raise Exception(r.status_code)
-        response = r.json()
-        session_key =  response['session_key']
-        return session_key
-
-    def set_session_cookie(user_id, response_contents, **kwargs):
-        #only try to get a session yey if you have to
-        if not 'session_key' in kwargs:
-            session_key = get_session_key(user_id)
-        else:
-            session_key = kwargs['session_key']
-
-        response = make_response(response_contents)
-        response.set_cookie('session_key', session_key)
-        response.set_cookie('user_id', user_id)
-        return {'session_key' : session_key, 'response' : response}
-
-    def selectuser_loadpipeline(*args,**kwargs):
-        max = len(settings.ALLOWLIST)
-        end = settings.ALLOWLIST[max-1]
-        pipeline = None
-        assert 'user_id' in kwargs
-        user_id = kwargs['user_id']
-        print("starting with " + str(user_id))
-        #first see if the pipeline loads with the passed user
-        try:
-            pipeline = DataStorePipeLine(*args, **kwargs)
-            return pipeline, user_id
-        except ValueError:
-            #if it doesn't work then try and find another dormant user_id
-            print("user_id " + user_id + " failed")
-            for item in settings.ALLOWLIST:
-                user_id = item
-                kwargs['user_id'] = user_id
-                print("... " + user_id)
-                try:
-                    pipeline = DataStorePipeLine(*args, **kwargs)
-                    return pipeline, user_id
-                except ValueError:
-                    print("user_id " + user_id + " failed")
-
-                if user_id == end:
-                    print("all user_id's failed")
-                    return False, settings.ALLOWLIST[0]
-                else:
-                    print("trying another user_id... " )
-
 
     @app.route("/access-restricted/", methods=['GET'])
     def access_denied():
@@ -94,8 +106,9 @@ def create_app():
         user_id = settings.ALLOWLIST[0]
         #Check if there is a cookie
         try:
-            cookie_session_key = request.cookies.get('session_key')
-            user_id = request.cookies.get('user_id')
+            cookies = fetch_session_cookies()
+            cookie_session_key = cookies["session_key"]
+            user_id = cookies["user_id"]
         finally:
             #if there is a cookie
             if not cookie_session_key == None and not user_id == None:
@@ -179,8 +192,9 @@ def create_app():
         clear = request.form.get('clear_pipe')
 
         # update the pipeline with the new source_key
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
         try:
             pipeline_obj = DataStorePipeLine(True,user_id = user_id, source_key = key, session_key = session_key)
         except:
@@ -201,8 +215,9 @@ def create_app():
         #We need to load the data to show the headers
         #You don't get to start a session from here
         token = csrf_token()
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
 
         url_dict = UrlDict(name = "url_dict")
 
@@ -217,8 +232,9 @@ def create_app():
             assert request.form['tokenField'] == token
         except:
             abort(403)
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
 
         #load the url_dict
         url_dict = UrlDict(name = "url_dict")
@@ -243,8 +259,9 @@ def create_app():
         #We need to load the data to show the headers
         #You don't get to start a session from here
         token = csrf_token()
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
         try:
             pipeline = DataStorePipeLine(True,user_id = user_id, session_key = session_key)
         except:
@@ -271,8 +288,9 @@ def create_app():
                 norm = True
         except:
             print('normalisation off')
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
         try:
             pipeline_obj = DataStorePipeLine(True,user_id = user_id, session_key = session_key)
         except:
@@ -312,8 +330,9 @@ def create_app():
         except:
             abort(403)
         SMILES = request.form["Smiles"]
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
         try:
             pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
@@ -337,8 +356,9 @@ def create_app():
         except:
             abort(403)
         ref_data_key = request.form["dataset_choice"]
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
         try:
             pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
@@ -364,8 +384,9 @@ def create_app():
         except:
             abort(403)
         ref_column = request.form["column_choice"]
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
         try:
             pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
@@ -382,8 +403,9 @@ def create_app():
 
     @app.route('/do-things/', methods = ['GET'])
     def generate_results():
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
         try:
             pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
@@ -394,8 +416,9 @@ def create_app():
     @app.route('/do-things/results', methods = ['GET','POST'])
     def generate_results_2():
 
-        session_key = request.cookies.get('session_key')
-        user_id = request.cookies.get('user_id')
+        cookies = fetch_session_cookies()
+        session_key = cookies["session_key"]
+        user_id = cookies["user_id"]
         try:
             pipeline_obj = DataStorePipeLine(True, user_id = user_id, session_key = session_key)
         except:
