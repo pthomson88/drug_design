@@ -42,6 +42,17 @@ def withtestpipeline(func):
 
     @functools.wraps(func)
     def wrapper(*args,**kwargs):
+
+        try:
+            #Clear up any pipelines and sessions before test
+            url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/test'
+            test_session_key = load_obj("test_session_key")
+            json_data = { 'lock' : False, 'session_key' : test_session_key }
+            r = requests.put(url, json=json_data, verify = False)
+
+        except:
+            pass
+
         #get a working session and pipeline (both in create_new_pipeline in DataStorePipeLine)
         token = csrf_token()
         test_pipeline_obj = DataStorePipeLine( False, user_id = "test" )
@@ -54,7 +65,7 @@ def withtestpipeline(func):
 
         func(*args,**kwargs)
 
-        #make session dormant and clear pipeline
+        #make session dormant and clear pipeline after test
         url = settings.BE_URL_PREFIX + '/drug_design_backend/api/v1/pipeline/test'
         json_data = { 'lock' : False, 'session_key' : test_pipeline_obj.session_key }
         r = requests.put(url, json=json_data, verify = False)
@@ -94,7 +105,6 @@ def test_norm_pipeline(client, monkeypatch, *args,**kwargs):
 
     url = url_for('similarity_score_page')
 
-    #monkeypatch in moack_cookies
     response = client.post( url, data = post_data, follow_redirects = True)
 
     #just fetch the pipeline directly to check if it has updated correctly
@@ -109,87 +119,125 @@ def test_norm_pipeline(client, monkeypatch, *args,**kwargs):
 
     assert test_pipeline_entity[norm_key] == True
 
-def test_norm_single_smiles(client,*args,**kwargs):
+@withtestpipeline
+def test_norm_single_smiles(client, monkeypatch, *args,**kwargs):
     #GIVEN I have a pipeline including normalisation and single smiles similarity scoring
     #AND I am on the view pipline page
     #WHEN I press submit to run the pipeline
     #THEN The similarity scores in my results are normalised
-    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": True, "single_smiles": "dog" }
-    save_obj(pipeline, 'tmp_pipeline')
-    print("Pipeline contents:")
-    print(pipeline)
-    result = client.post(url_for('generate_results_2'))
-    assert result.status_code == 200
 
-    sim_result = result.data
-    print(sim_result)
+    monkeypatch.setattr( 'main.fetch_session_cookies', mock_cookies )
+
+    update = {
+        "source_key":"test_download",
+        "similarity_score_100": "a",
+        "sub_similarity_score_100_normalise": True,
+        "sub_similarity_score_100_single_smiles": "dog"
+    }
+
+    test_pipeline = kwargs["test_pipeline"]
+    test_session_key = test_pipeline.session_key
+
+    test_pipeline.update_property_datastore(**update)
+
+    url = url_for('generate_results_2')
+    response = client.post(url, follow_redirects = False)
+    assert response.status_code == 200
+
+    sim_result = response.data
     table = pd.read_html(sim_result)
     assert table[0]['sim_score_dog'][2] == 33.333333
 
-    pipeline = {"source_key" : ""}
-    save_obj(pipeline, 'tmp_pipeline')
-
-def test_single_smiles(client):
+@withtestpipeline
+def test_single_smiles(client, monkeypatch, *args,**kwargs):
     #GIVEN I have a pipeline with normalisation off and single smiles similarity scoring
     #AND I am on the view pipline page
     #WHEN I press submit to run the pipeline
     #THEN The similarity scores in my results are not normalised
-    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": False, "single_smiles": "dog"}
-    save_obj(pipeline, 'tmp_pipeline')
-    print("Pipeline contents:")
-    print(pipeline)
-    result = client.post(url_for('generate_results_2'))
-    assert result.status_code == 200
+    monkeypatch.setattr( 'main.fetch_session_cookies', mock_cookies )
 
-    sim_result = result.data
-    print(sim_result)
+    update = {
+        "source_key":"test_download",
+        "similarity_score_100": "a",
+        "sub_similarity_score_100_normalise": False,
+        "sub_similarity_score_100_single_smiles": "dog"
+    }
+
+    test_pipeline = kwargs["test_pipeline"]
+    test_session_key = test_pipeline.session_key
+
+    test_pipeline.update_property_datastore(**update)
+
+    url = url_for('generate_results_2')
+    response = client.post(url, follow_redirects = False)
+    assert response.status_code == 200
+
+    sim_result = response.data
     table = pd.read_html(sim_result)
     assert table[0]['sim_score_dog'][2] == 2
 
-    pipeline = {"source_key" : ""}
-    save_obj(pipeline, 'tmp_pipeline')
-
-
-def test_norm_df_smiles(client):
+@withtestpipeline
+def test_norm_df_smiles(client, monkeypatch, *args, **kwargs):
     #GIVEN I have a pipeline including normalisation and dataframe smiles similarity scoring
     #AND I am on the view pipline page
     #WHEN I press submit to run the pipeline
     #THEN The similarity scores in my results are normalised
     #AND the correct best score is returned based on the normalised scores
-    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": True, "dataframe_smiles_ref": "test_download_2", "dataframe_smiles_col": "animal"}
-    save_obj(pipeline, 'tmp_pipeline')
-    print("Pipeline contents:")
-    print(pipeline)
-    result = client.post(url_for('generate_results_2'))
-    assert result.status_code == 200
+    monkeypatch.setattr( 'main.fetch_session_cookies', mock_cookies )
 
-    sim_result = result.data
-    print(sim_result)
+    update = {
+        "source_key":"test_download",
+        "similarity_score_100": "a",
+        "sub_similarity_score_100_normalise": True,
+        "sub_similarity_score_100_dataframe_smiles_ref" : "test_download_2",
+        "sub_similarity_score_100_dataframe_smiles_col" : "animal"
+    }
+
+    test_pipeline = kwargs["test_pipeline"]
+    test_session_key = test_pipeline.session_key
+
+    test_pipeline.update_property_datastore(**update)
+
+    url = url_for('generate_results_2')
+    response = client.post(url, follow_redirects = False)
+    assert response.status_code == 200
+
+    sim_result = response.data
     table = pd.read_html(sim_result)
-    assert table[0]['sim_match_test_download_2_animal'][1] == "cat"
-    assert table[0]['sim_score_test_download_2_animal'][1] == 33.333333
+    #results are sorted so c and cat expected to top results table
+    assert table[0]['a'][0] == "c"
+    assert table[0]['sim_match_test_download_2_animal'][0] == "cat"
+    assert table[0]['sim_score_test_download_2_animal'][0] == 33.333333
 
-    pipeline = {"source_key" : ""}
-    save_obj(pipeline, 'tmp_pipeline')
-
-def test_df_smiles(client):
+@withtestpipeline
+def test_df_smiles(client, monkeypatch, *args, **kwargs):
     #GIVEN I have a pipeline with normalisation off and dataframe smiles similarity scoring
     #AND I am on the view pipline page
     #WHEN I press submit to run the pipeline
     #THEN The similarity scores in my results are not normalised
     #AND the correct best score is returned based on the un-normalised scores
-    pipeline = {"source_key":"test_download", "similarity_score": "a", "normalise_scores": False, "dataframe_smiles_ref": "test_download_2", "dataframe_smiles_col": "animal"}
-    save_obj(pipeline, 'tmp_pipeline')
-    print("Pipeline contents:")
-    print(pipeline)
-    result = client.post(url_for('generate_results_2'))
-    assert result.status_code == 200
+    monkeypatch.setattr( 'main.fetch_session_cookies', mock_cookies )
 
-    sim_result = result.data
-    print(sim_result)
+    update = {
+        "source_key":"test_download",
+        "similarity_score_100": "a",
+        "sub_similarity_score_100_normalise": False,
+        "sub_similarity_score_100_dataframe_smiles_ref" : "test_download_2",
+        "sub_similarity_score_100_dataframe_smiles_col" : "animal"
+    }
+
+    test_pipeline = kwargs["test_pipeline"]
+    test_session_key = test_pipeline.session_key
+
+    test_pipeline.update_property_datastore(**update)
+
+    url = url_for('generate_results_2')
+    response = client.post(url, follow_redirects = False)
+    assert response.status_code == 200
+
+    sim_result = response.data
     table = pd.read_html(sim_result)
-    assert table[0]['sim_match_test_download_2_animal'][1] == "cat"
-    assert table[0]['sim_score_test_download_2_animal'][1] == 2
-
-    pipeline = {"source_key" : ""}
-    save_obj(pipeline, 'tmp_pipeline')
+    #results are sorted so c and cat expected to top results table
+    assert table[0]['a'][0] == "c"
+    assert table[0]['sim_match_test_download_2_animal'][0] == "cat"
+    assert table[0]['sim_score_test_download_2_animal'][0] == 2

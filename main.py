@@ -55,7 +55,7 @@ def fetch_session_cookies():
         "session_key" : session_key
 
         }
-        
+
     return cookies
 
 def selectuser_loadpipeline(*args,**kwargs):
@@ -413,7 +413,7 @@ def create_app():
         pipeline = pipeline_obj.dictionary
         return render_template("run_pipeline.html", Pipeline = pipeline)
 
-    @app.route('/do-things/results', methods = ['GET','POST'])
+    @app.route('/do-things/results', methods = ['POST'])
     def generate_results_2():
 
         cookies = fetch_session_cookies()
