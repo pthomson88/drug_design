@@ -4,5 +4,5 @@ numpy==1.18.1
 DateTime==4.3
 requests==2.23.0
 pytz==2019.3
-urllib3==1.25.9
+urllib3==1.26.5
 pathos==0.2.6
