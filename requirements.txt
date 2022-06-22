@@ -1,6 +1,6 @@
 Flask==1.1.2
 pandas==1.0.3
-numpy==1.18.1
+numpy==1.22.0
 DateTime==4.3
 requests==2.23.0
 pytz==2019.3
